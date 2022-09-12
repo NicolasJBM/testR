@@ -4,16 +4,18 @@
 \alias{edit_test_server}
 \title{Create tests.}
 \usage{
-edit_test_server(id, preselection, documents, document_parameters)
+edit_test_server(id, filtered, course_data, test, course_paths)
 }
 \arguments{
 \item{id}{Character. ID of the module to connect the user interface to the appropriate server side.}
 
-\item{preselection}{Tibble. List of pre-selected documents.}
+\item{filtered}{Reactive. List of pre-selected documents.}
 
-\item{documents}{Tibble. Complete list of documents.}
+\item{course_data}{Reactive. Function containing all the course data loaded with the course.}
 
-\item{document_parameters}{Tibble. Statistics associated with the documents.}
+\item{test}{Character. Selected test.}
+
+\item{course_paths}{Reactive. Function containing a list of paths to the different folders and databases on local disk.}
 }
 \value{
 Save the test parameters in the relevant test sub-folder in the folder "5_tests".

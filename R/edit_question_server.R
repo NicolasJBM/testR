@@ -7,7 +7,6 @@
 #' @param course_data Reactive. Function containing all the course data loaded with the course.
 #' @param tree Reactive. Function containing a list of documents as a classification tree compatible with jsTreeR
 #' @param course_paths Reactive. Function containing a list of paths to the different folders and databases on local disk.
-#' @param doctype Character. Whether the document is a "Note", "Page", "Slide", "Video", "Game", or "Case" (questions are handled by another module).
 #' @return Save the new or modified page in the folder "2_documents/main_language/".
 #' @importFrom dplyr filter
 #' @importFrom dplyr left_join
@@ -51,61 +50,20 @@ edit_question_server <- function(
   shiny::moduleServer(id, function(input, output, session) {
 
     type <- NULL
-    language <- NULL
-    section <- NULL
-    authors <- NULL
-
-
+    data <- NULL
+    
 
     # Load data ################################################################
 
     selection <- shiny::reactive({
       shiny::req(!base::is.null(filtered()))
       filtered() |>
-        dplyr::filter(type %in% c("Statements","Alternatives","Computation","Essay",""))
-    })
-
-    prefix <- shiny::reactive({
-      base::switch(
-        doctype,
-        Note = "N",
-        Page = "P",
-        Slide = "S",
-        Video = "V",
-        Game = "G",
-        Case = "C"
-      )
-    })
-
-    templates_path <- shiny::reactive({
-      base::switch(
-        doctype,
-        Note = course_paths()$subfolders$templates_note,
-        Page = course_paths()$subfolders$templates_page,
-        Slide = course_paths()$subfolders$templates_slide,
-        Video = course_paths()$subfolders$templates_video,
-        Game = course_paths()$subfolders$templates_game,
-        Case = course_paths()$subfolders$templates_case
-      )
+        dplyr::filter(type %in% c("Statements","Alternatives","Computation","Essay","Problem"))
     })
 
     template_files <- shiny::reactive({
-      base::list.files(templates_path())
+      base::list.files(course_paths()$subfolders$templates_question)
     })
-
-    output_folder <- shiny::reactive({
-      base::switch(
-        doctype,
-        Note = course_paths()$subfolders$blog,
-        Page = course_paths()$subfolders$textbooks,
-        Slide = course_paths()$subfolders$presentations,
-        Video = course_paths()$subfolders$scripts,
-        Game = course_paths()$subfolders$games,
-        Case = course_paths()$subfolders$cases
-      )
-    })
-
-
 
     # Select document ##########################################################
 
@@ -129,25 +87,21 @@ edit_question_server <- function(
         selected = selection, width = "100%"
       )
     })
-
-
+    
+    doctype <- shiny::reactive({
+      shiny::req(!base::is.null(input$selectedquest))
+      shiny::req(!base::is.null(selection()))
+      question <- selection() |>
+        dplyr::filter(file == input$selectedquest)
+      question$type[1]
+    })
 
     # Display statistics #######################################################
-
-    output$ratingsstatistics <- shiny::renderUI({
-      shiny::req(!base::is.null(input$selectedquest))
-      shiny::req(input$selectedquest != "")
-      make_infobox(course_data, input$selectedquest, "ratings")
-    })
-    output$viewsstatistics <- shiny::renderUI({
-      shiny::req(!base::is.null(input$selectedquest))
-      shiny::req(input$selectedquest != "")
-      make_infobox(course_data, input$selectedquest, "views")
-    })
+    
     output$resultsstatistics <- shiny::renderUI({
       shiny::req(!base::is.null(input$selectedquest))
       shiny::req(input$selectedquest != "")
-      make_infobox(course_data, input$selectedquest, "results")
+      editR::make_infobox(course_data, input$selectedquest, "results")
     })
 
 
@@ -169,170 +123,45 @@ edit_question_server <- function(
       filepath <- base::paste0(
         course_paths()$subfolders$original, "/", input$selectedquest
       )
-      quest <- base::readLines(filepath)
-      quest <- quest[1:(base::match('Meta-information', quest)-1)]
-
-
-      if (doctype == "Note"){
-
-        yaml <- c(
-          '---',
-          base::paste0('title: ', selected$title[1]),
-          'subtitle: <hr>',
-          'output:',
-          '  rmarkdown::html_document:',
-          '    self_contained: false',
-          '    css: ["format/css/notes.css", "format/css/fa.css"]',
-          '    fig_width: 8',
-          '    fig_height: 6',
-          '    fig_caption: true',
-          '    mathjax: default',
-          'csl: format/csl/apa.csl',
-          'bibliography: data/references.bib',
-          '---'
-        )
-
-      } else if (doctype == "Page"){
-
-        yaml <- c(
-          '---',
-          base::paste0('title: ', selected$title[1]),
-          'subtitle: <hr>',
-          'output:',
-          '  rmarkdown::html_document:',
-          '    self_contained: false',
-          '    css: ["format/css/pages.css", "format/css/fa.css"]',
-          '    fig_width: 8',
-          '    fig_height: 6',
-          '    fig_caption: true',
-          '    mathjax: default',
-          'csl: format/csl/apa.csl',
-          'bibliography: data/references.bib',
-          '---'
-        )
-
-      } else if (doctype == "Slide"){
-
-        if ("tag_authors" %in% base::names(selected)){
-          authors <- selected$tag_authors[[1]]
-        } else {
-          authors <- ""
-        }
-
-        yaml <- c(
-          '---',
-          base::paste0('title: <large> ', selected$title[[1]],' </large>'),
-          base::paste0('author: <hr> ', authors),
-          base::paste0('date: ', base::format(base::Sys.time(), '%B %d, %Y')),
-          'output:',
-          '  revealjs::revealjs_presentation:',
-          '    self_contained: false',
-          '    reveal_plugins: ["menu","chalkboard"]',
-          '    incremental: true',
-          '    highlight: pygments',
-          '    center: true',
-          '    transition: slide',
-          '    background_transition: slide',
-          '    reveal_options:',
-          '      showNotes: true',
-          '      slideNumber: true',
-          '      previewLinks: true',
-          '    fig_width: 8',
-          '    fig_height: 6',
-          '    fig_caption: true',
-          '    css: format/css/slides.css',
-          '    mathjax: default',
-          'csl: format/csl/apa.csl',
-          'bibliography: data/references.bib',
-          '---'
-        )
-
-      } else if (doctype == "Video"){
-
-        yaml <- c(
-          '---',
-          base::paste0('title: ', selected$title[1]),
-          'subtitle: <hr>',
-          'output:',
-          '  rmarkdown::html_document:',
-          '    self_contained: false',
-          '    css: ["format/css/videos.css", "format/css/fa.css"]',
-          '    fig_width: 8',
-          '    fig_height: 6',
-          '    fig_caption: true',
-          '    mathjax: default',
-          'csl: format/csl/apa.csl',
-          'bibliography: data/references.bib',
-          '---'
-        )
-
-      } else if (doctype == "Game"){
-
-        yaml <- c(
-          '---',
-          base::paste0('title: ', selected$title[1]),
-          'subtitle: <hr>',
-          'output:',
-          '  rmarkdown::html_document:',
-          '    self_contained: false',
-          '    css: ["format/css/games.css", "format/css/fa.css"]',
-          '    fig_width: 8',
-          '    fig_height: 6',
-          '    fig_caption: true',
-          '    mathjax: default',
-          'csl: format/csl/apa.csl',
-          'bibliography: data/references.bib',
-          '---'
-        )
-
-      } else {
-
-        yaml <- c(
-          '---',
-          base::paste0('title: ', selected$title[1]),
-          'subtitle: <hr>',
-          'output:',
-          '  rmarkdown::html_document:',
-          '    self_contained: false',
-          '    css: ["format/css/cases.css", "format/css/fa.css"]',
-          '    fig_width: 8',
-          '    fig_height: 6',
-          '    fig_caption: true',
-          '    mathjax: default',
-          'csl: format/csl/apa.csl',
-          'bibliography: data/references.bib',
-          '---'
-        )
-
-      }
-
-      quest <- c(yaml, quest)
-
-      rmdpath <- base::paste0(
-        course_paths()$subfolders$course,
-        "/temporary/tmpquest.Rmd"
-      )
-      base::writeLines(quest, rmdpath, useBytes = TRUE)
-      rmarkdown::render(rmdpath, encoding="UTF-8", quiet = TRUE) |>
-        base::suppressWarnings()
+      
       title <- selected |>
-        editR::make_title_display(course_data)
-
-      if (doctype == "Slide"){
-        shinydashboardPlus::box(
-          width = 12, title = title, solidHeader = TRUE, status = "primary",
-          collapsible = FALSE, collapsed = FALSE, height = "550px",
-          shiny::tags$iframe(src="temporary/tmpquest.html", height = 520, width = "100%")
+        editR::make_title_display(tags)
+      
+      base::load(course_paths()$databases$propositions)
+      as_latex <- FALSE
+      record_version <- FALSE
+      
+      shinydashboardPlus::box(
+        width = 12, title = title, solidHeader = TRUE,
+        status = "primary", collapsible = FALSE, collapsed = FALSE,
+        height = "750px",
+        shiny::fluidRow(
+          shiny::column(
+            12,
+            base::suppressWarnings(
+              shiny::withMathJax(shiny::HTML(knitr::knit2html(
+                text = base::readLines(filepath),
+                fragment.only = TRUE, quiet = TRUE
+              )))
+            )
+          )
         )
-      } else {
-        shinydashboardPlus::box(
-          width = 12, title = title, solidHeader = TRUE, status = "primary",
-          collapsible = FALSE, collapsed = FALSE, height = "750px",
-          shiny::tags$iframe(src="temporary/tmpquest.html", height = 750, width="100%")
-        )
-      }
+      )
     })
-
+    
+    output$displaycurve <- shiny::renderPlot({
+      shiny::req(!base::is.null(input$selectedquest))
+      shiny::req(input$selectedquest != "")
+      models <- 
+      selected_model <- course_data()$document_models |>
+        dplyr::filter(file == input$selectedquest) |>
+        dplyr::select(data) |>
+        tidyr::unnest(data)
+      if (base::nrow(selected_model) > 0){
+        editR::display_curve(selected_model)
+      } else shiny::tags$br()
+    }, height = 600)
+    
 
 
     # Edit question ############################################################
@@ -432,7 +261,7 @@ edit_question_server <- function(
 
     shiny::observeEvent(input$createquest, {
       shiny::removeModal()
-      newname <- editR::make_new_name(prefix(), course_paths)
+      newname <- editR::make_new_name("Q", course_paths)
       newfile <- base::paste0(newname, ".Rmd")
       if (input$slcttemplatebasis == "") {
         lines <- c(
@@ -441,7 +270,7 @@ edit_question_server <- function(
           "Meta-information",
           "================",
           "exextra[title]:New question.  ",
-          "exextra[type]:", doctype, "  ",
+          "exextra[type]: Problem ",
           base::paste0(
             "exextra[document]:",
             stringr::str_remove(newname, "_...Rmd$"),
@@ -452,12 +281,12 @@ edit_question_server <- function(
       } else {
         lines = base::readLines(
           base::paste0(
-            templates_path(), "/",
+            course_paths()$subfolders$templates_question, "/",
             input$slcttemplatebasis
           )
         )
         lines <- stringr::str_replace_all(
-          lines, base::paste0(prefix(), "XXXXXXXXX"),
+          lines, base::paste0("QXXXXXXXXX"),
           stringr::str_remove(newname, "_...Rmd$")
         )
       }

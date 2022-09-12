@@ -3,9 +3,10 @@
 #' @author Nicolas Mangin
 #' @description Module allowing the user to create tests from a selection of questions.
 #' @param id Character. ID of the module to connect the user interface to the appropriate server side.
-#' @param preselection Tibble. List of pre-selected documents.
-#' @param documents Tibble. Complete list of documents.
-#' @param document_parameters Tibble. Statistics associated with the documents.
+#' @param filtered Reactive. List of pre-selected documents.
+#' @param course_data Reactive. Function containing all the course data loaded with the course.
+#' @param test Character. Selected test.
+#' @param course_paths Reactive. Function containing a list of paths to the different folders and databases on local disk.
 #' @return Save the test parameters in the relevant test sub-folder in the folder "5_tests".
 #' @import shiny
 #' @importFrom stringr str_detect
@@ -48,7 +49,7 @@
 
 
 edit_test_server <- function(
-  id, preselection, documents, document_parameters
+  id, filtered, course_data, test, course_paths
 ){
   ns <- shiny::NS(id)
   shiny::moduleServer(
@@ -100,8 +101,8 @@ edit_test_server <- function(
       # Preselected questions ##################################################
       
       questions <- shiny::reactive({
-        shiny::req(!base::is.null(preselection()))
-        preselection() |>
+        shiny::req(!base::is.null(filtered()))
+        filtered() |>
           dplyr::filter(type %in% c(
             "Statements","Alternatives","Computation","Essay","Problem")
           )
@@ -424,7 +425,7 @@ edit_test_server <- function(
           base::union(modrval$preselected_retested) |>
           base::union(modrval$preselected_untested) |>
           base::union(modrval$questions_pretested)
-        sampled_questions <- documents |>
+        sampled_questions <- course_data()$documents |>
           dplyr::filter(file %in% base::union(
             modrval$questions_included, questions()$file
           )) |>
@@ -444,12 +445,12 @@ edit_test_server <- function(
       
       selected_statistics <- shiny::reactive({
         shiny::req(!base::is.null(input$slctquest2display))
-        shiny::req(!base::is.null(documents))
-        if (shiny::req(input$slctquest2display %in% documents$file)){
-          documents |>
+        shiny::req(!base::is.null(course_data()$documents))
+        if (shiny::req(input$slctquest2display %in% course_data()$documents$file)){
+          course_data()$documents |>
             dplyr::filter(file == input$slctquest2display) |>
             dplyr::select(code, language) |>
-            dplyr::left_join(document_parameters, by = c("code","language"))
+            dplyr::left_join(course_data()$document_parameters, by = c("code","language"))
         } else NULL
       })
       
@@ -461,12 +462,12 @@ edit_test_server <- function(
       
       output$viewquestion <- shiny::renderUI({
         shiny::req(input$slctquest2display)
-        shiny::req(!base::is.null(documents))
-        shiny::req(input$slctquest2display %in% documents$file)
+        shiny::req(!base::is.null(course_data()$documents))
+        shiny::req(input$slctquest2display %in% course_data()$documents$file)
         base::load("2_documents/tags.RData")
         feedbacks <- modrval$feedbacks
         base::load("5_tests/default/test_parameters.RData")
-        selected <- documents |>
+        selected <- course_data()$documents |>
           dplyr::filter(file == input$slctquest2display) |>
           dplyr::left_join(dplyr::select(
             course_data()$document_types, type, icon
@@ -588,7 +589,7 @@ edit_test_server <- function(
         shiny::req(base::nrow(modrval$test_parameters) > 0)
         modrval$test_parameters |>
           dplyr::left_join(dplyr::select(
-            documents, question = file, language, title, type
+            course_data()$documents, question = file, language, title, type
           ), by = "question") |>
           dplyr::group_by(
             question, title, type, language, section, bloc, altnbr,
@@ -746,10 +747,10 @@ edit_test_server <- function(
             file = question, section, bloc, points, test_points, test_duration
           ) |>
           dplyr::left_join(
-            dplyr::select(documents, file, code, language),
+            dplyr::select(course_data()$documents, file, code, language),
             by = "file"
           ) |>
-          dplyr::left_join(document_parameters, by = c("code","language")) |>
+          dplyr::left_join(course_data()$document_parameters, by = c("code","language")) |>
           dplyr::select(
             file, section, bloc, points, test_points, test_duration, success
           )
@@ -849,7 +850,7 @@ edit_test_server <- function(
       
       output$testquestion2edit <- shiny::renderUI({
         shiny::req(!base::is.null(modrval$test_parameters))
-        test_questions <- documents |>
+        test_questions <- course_data()$documents |>
           dplyr::filter(
             file %in% base::unique(modrval$test_parameters$question)
           )

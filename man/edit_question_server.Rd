@@ -16,8 +16,6 @@ edit_question_server(id, filtered, course_data, tree, course_paths)
 \item{tree}{Reactive. Function containing a list of documents as a classification tree compatible with jsTreeR}
 
 \item{course_paths}{Reactive. Function containing a list of paths to the different folders and databases on local disk.}
-
-\item{doctype}{Character. Whether the document is a "Note", "Page", "Slide", "Video", "Game", or "Case" (questions are handled by another module).}
 }
 \value{
 Save the new or modified page in the folder "2_documents/main_language/".
