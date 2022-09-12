@@ -1,0 +1,87 @@
+#' @name create_alternatives
+#' @title Create a single or multiple true or false alternative selection question
+#' @author Nicolas Mangin
+#' @description Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on alternatives.
+#' @param feedbacks Tibble. Table from which items (alternatives) and associated feedback are selected.
+#' @param codes Character string. Code of the question to which the propositions are linked.
+#' @param langiso Character. ISO code of the language of the question.
+#' @param situation List. The entry selected as the situation which determines which items are true.
+#' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
+#' @param correctnbr Integer. Number of correct propositions (i.e. choices) to offer to the student.
+#' @return Tibble. Table containing all the information about the propositions made to the student.
+#' @importFrom dplyr filter
+#' @importFrom dplyr slice_sample
+#' @importFrom dplyr bind_rows
+#' @importFrom dplyr case_when
+#' @importFrom dplyr select
+#' @importFrom tibble tibble
+#' @export
+
+create_alternatives <- function(
+  feedbacks, codes, langiso, situation, altnbr, correctnbr
+){
+  
+  type <- NULL
+  language <- NULL
+  value <- NULL
+  
+  interrogation <- situation[[1]]$interrogation
+  correct_answer <- situation[[1]]$correct
+  imperfect_answer <- situation[[1]]$imperfect
+  
+  selected <- feedbacks |>
+    dplyr::filter(
+      type == "Alternatives",
+      code %in% codes,
+      language == langiso
+    ) |>
+    dplyr::mutate(
+      value = dplyr::case_when(
+        item %in% correct_answer ~ 1,
+        item %in% imperfect_answer ~ 0.5,
+        TRUE ~ 0
+      )
+    )
+  
+  correctnbr <- base::min(altnbr, correctnbr)
+  incorrectnbr <- altnbr - correctnbr
+  
+  if (base::nrow(selected) >= altnbr){
+    
+    maxtrue <- base::min(altnbr, base::sum(selected$value))
+    nbrtrue <- base::sample(1:maxtrue, 1)
+    
+    selected_correct <- selected |>
+      dplyr::filter(value == 1) |>
+      dplyr::slice_sample(n = correctnbr)
+    
+    selected_incorrect <- selected |>
+      dplyr::filter(value < 1) |>
+      dplyr::slice_sample(n = incorrectnbr)
+    
+    exercise <- selected_correct |>
+      dplyr::bind_rows(selected_incorrect)
+    
+  } else {
+    
+    exercise <- tibble::tibble(
+      item = c(1:altnbr), code = "", type = "", document = "",
+      language = "", modifications = 0,
+      proposition = "", value = c(1, base::rep(0, (altnbr-1))), scale = "",
+      explanation = "", keywords = ""
+    )
+    
+  }
+  
+  exercise <- exercise |>
+    dplyr::slice_sample(n = altnbr) |>
+    dplyr::mutate(
+      number = base::seq_len(altnbr),
+      letter = base::letters[base::seq_len(altnbr)],
+      correct = value,
+      interrogation = interrogation
+    )
+  
+  return(exercise)
+}
+
