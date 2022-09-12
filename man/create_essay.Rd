@@ -4,10 +4,10 @@
 \alias{create_essay}
 \title{Create an essay}
 \usage{
-create_essay(feedbacks, codes, langiso, interrogation)
+create_essay(propositions, codes, langiso, interrogation)
 }
 \arguments{
-\item{feedbacks}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
 
 \item{codes}{Character string. Code of the question to which the propositions are linked.}
 

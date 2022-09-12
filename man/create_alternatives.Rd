@@ -4,10 +4,17 @@
 \alias{create_alternatives}
 \title{Create a single or multiple true or false alternative selection question}
 \usage{
-create_alternatives(feedbacks, codes, langiso, situation, altnbr, correctnbr)
+create_alternatives(
+  propositions,
+  codes,
+  langiso,
+  situation,
+  altnbr,
+  correctnbr
+)
 }
 \arguments{
-\item{feedbacks}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
 
 \item{codes}{Character string. Code of the question to which the propositions are linked.}
 

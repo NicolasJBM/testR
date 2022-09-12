@@ -2,7 +2,7 @@
 #' @title Create a single or multiple true or false alternative selection question
 #' @author Nicolas Mangin
 #' @description Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on alternatives.
-#' @param feedbacks Tibble. Table from which items (alternatives) and associated feedback are selected.
+#' @param propositions Tibble. Table from which items (alternatives) and associated feedback are selected.
 #' @param codes Character string. Code of the question to which the propositions are linked.
 #' @param langiso Character. ISO code of the language of the question.
 #' @param situation List. The entry selected as the situation which determines which items are true.
@@ -18,7 +18,7 @@
 #' @export
 
 create_alternatives <- function(
-  feedbacks, codes, langiso, situation, altnbr, correctnbr
+  propositions, codes, langiso, situation, altnbr, correctnbr
 ){
   
   type <- NULL
@@ -29,7 +29,7 @@ create_alternatives <- function(
   correct_answer <- situation[[1]]$correct
   imperfect_answer <- situation[[1]]$imperfect
   
-  selected <- feedbacks |>
+  selected <- propositions |>
     dplyr::filter(
       type == "Alternatives",
       code %in% codes,

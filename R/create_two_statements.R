@@ -2,7 +2,7 @@
 #' @title Create a two-statements question
 #' @author Nicolas Mangin
 #' @description Function creating the different propositions as well as the feedback associated with a given version of a question in which two statements can be either true or false.
-#' @param feedbacks Tibble. Table from which statements and associated feedback are selected.
+#' @param propositions Tibble. Table from which statements and associated feedback are selected.
 #' @param documents Character vector. List of document ids from that the selected statements should address.
 #' @param langiso Character. ISO code of the language of the question.
 #' @return Tibble. Table containing all the information about the propositions (i.e. choices) made to the student.
@@ -16,7 +16,7 @@
 
 
 create_two_statements <- function(
-  feedbacks, documents, langiso
+  propositions, documents, langiso
 ){
   
   type <- NULL
@@ -25,7 +25,7 @@ create_two_statements <- function(
   tmp <- NULL
   value <- NULL
   
-  selected <- feedbacks |>
+  selected <- propositions |>
     dplyr::filter(
       type == "Statements",
       document %in% documents,

@@ -2,7 +2,7 @@
 #' @title Create a single or multiple true or false alternative selection question
 #' @author Nicolas Mangin
 #' @description Function creating a computation question by retrieving in feedback
-#' @param feedbacks Tibble. Table from which items (alternatives) and associated feedback are selected.
+#' @param propositions Tibble. Table from which items (alternatives) and associated feedback are selected.
 #' @param codes Character string. Code of the question to which the propositions are linked.
 #' @param langiso Character. ISO code of the language of the question.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
@@ -17,14 +17,14 @@
 
 
 create_computation <- function(
-  feedbacks, codes, langiso, altnbr, interrogation
+  propositions, codes, langiso, altnbr, interrogation
 ){
   
   type <- NULL
   language <- NULL
   value <- NULL
   
-  selected <- feedbacks |>
+  selected <- propositions |>
     dplyr::filter(
       type == "Computation",
       code %in% codes,

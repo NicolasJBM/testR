@@ -2,7 +2,7 @@
 #' @title Create a single or multiple true or false statement selection question
 #' @author Nicolas Mangin
 #' @description Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on statements.
-#' @param feedbacks Tibble. Table from which items (statements) and associated feedback are selected.
+#' @param propositions Tibble. Table from which items (statements) and associated feedback are selected.
 #' @param documents Character vector. List of document ids from that the selected statements should address.
 #' @param langiso Character. ISO code of the language of the question.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
@@ -20,7 +20,7 @@
 
 
 create_statements <- function(
-  feedbacks, documents, langiso, altnbr, truenbr, indication = TRUE
+  propositions, documents, langiso, altnbr, truenbr, indication = TRUE
 ){
   
   type <- NULL
@@ -28,7 +28,7 @@ create_statements <- function(
   language <- NULL
   value <- NULL
   
-  selected <- feedbacks |>
+  selected <- propositions |>
     dplyr::filter(
       type == "Statements",
       document %in% documents,

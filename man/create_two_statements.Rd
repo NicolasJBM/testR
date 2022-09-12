@@ -4,10 +4,10 @@
 \alias{create_two_statements}
 \title{Create a two-statements question}
 \usage{
-create_two_statements(feedbacks, documents, langiso)
+create_two_statements(propositions, documents, langiso)
 }
 \arguments{
-\item{feedbacks}{Tibble. Table from which statements and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which statements and associated feedback are selected.}
 
 \item{documents}{Character vector. List of document ids from that the selected statements should address.}
 

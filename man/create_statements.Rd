@@ -5,7 +5,7 @@
 \title{Create a single or multiple true or false statement selection question}
 \usage{
 create_statements(
-  feedbacks,
+  propositions,
   documents,
   langiso,
   altnbr,
@@ -14,7 +14,7 @@ create_statements(
 )
 }
 \arguments{
-\item{feedbacks}{Tibble. Table from which items (statements) and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which items (statements) and associated feedback are selected.}
 
 \item{documents}{Character vector. List of document ids from that the selected statements should address.}
 
