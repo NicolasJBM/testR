@@ -14,6 +14,19 @@
 
 set_question_parameters <- function(versionid, test_parameters = NA, as_latex = FALSE, record_version = FALSE){
   
+  if (base::is.na(test_parameters)){
+    test_parameters <- tibble::tibble(
+      test = "default",
+      show_version = FALSE,
+      show_points = FALSE,
+      question = versionid,
+      points = 0,
+      version = versionid,
+      altnbr = 4,
+      seed = 123456789
+    )
+  }
+  
   version_parameters <- test_parameters |>
     dplyr::filter(version == versionid)
   

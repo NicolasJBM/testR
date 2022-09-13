@@ -4,11 +4,13 @@
 #' @description Module facilitating the quick creation or modification of questions, solutions, and feedback.
 #' @param id Character. ID of the module to connect the user interface to the appropriate server side.
 #' @return Save the new or modified document in the original documents folder.
+#' @importFrom rhandsontable rHandsontableOutput
 #' @importFrom shiny actionButton
 #' @importFrom shiny column
 #' @importFrom shiny fluidRow
 #' @importFrom shiny icon
 #' @importFrom shiny NS
+#' @importFrom shiny plotOutput
 #' @importFrom shiny uiOutput
 #' @export
 
@@ -31,6 +33,14 @@ edit_question_ui <- function(id){
     shiny::fluidRow(
       shiny::column(6, shiny::uiOutput(ns("viewquest"))),
       shiny::column(6, shiny::uiOutput(ns("editquest")))
+    ),
+    shiny::fluidRow(
+      shiny::column(
+        3,
+        shiny::uiOutput(ns("selectpropositions")),
+        shiny::plotOutput(ns("displaycurve"))
+      ),
+      shiny::column(9, rhandsontable::rHandsontableOutput(ns("editprop")))
     )
   )
 }

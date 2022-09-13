@@ -4,16 +4,14 @@
 \alias{edit_question_server}
 \title{Edit questions, solutions, and feedback}
 \usage{
-edit_question_server(id, filtered, course_data, tree, course_paths)
+edit_question_server(id, filtered, course_data, course_paths)
 }
 \arguments{
 \item{id}{Character. ID of the module to connect the user interface to the appropriate server side.}
 
 \item{filtered}{Reactive. List of pre-selected documents.}
 
-\item{course_data}{Reactive. Function containing all the course data loaded with the course.}
-
-\item{tree}{Reactive. Function containing a list of documents as a classification tree compatible with jsTreeR}
+\item{course_data}{Reactive. Function containing a list of all the course data loaded with the course.}
 
 \item{course_paths}{Reactive. Function containing a list of paths to the different folders and databases on local disk.}
 }
