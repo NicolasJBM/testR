@@ -33,6 +33,5 @@ Imports:
     shinyAce,
     shinyWidgets,
     shinydashboard,
-    rstudioapi,
     editR
 
