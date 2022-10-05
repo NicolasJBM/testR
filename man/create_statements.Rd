@@ -4,21 +4,12 @@
 \alias{create_statements}
 \title{Create a single or multiple true or false statement selection question}
 \usage{
-create_statements(
-  propositions,
-  documents,
-  langiso,
-  altnbr,
-  truenbr,
-  indication = TRUE
-)
+create_statements(propositions, documents, altnbr, truenbr, indication = TRUE)
 }
 \arguments{
 \item{propositions}{Tibble. Table from which items (statements) and associated feedback are selected.}
 
 \item{documents}{Character vector. List of document ids from that the selected statements should address.}
-
-\item{langiso}{Character. ISO code of the language of the question.}
 
 \item{altnbr}{Integer. Number of propositions (i.e. choices) to offer to the student.}
 

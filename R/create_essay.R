@@ -4,7 +4,6 @@
 #' @description Function creating an essay question by retrieving grading criteria from the feedback table.
 #' @param propositions Tibble. Table from which items (alternatives) and associated feedback are selected.
 #' @param codes Character string. Code of the question to which the propositions are linked.
-#' @param langiso Character. ISO code of the language of the question.
 #' @param interrogation Character. Question asked to the student.
 #' @return Tibble. Table containing all the information about the propositions made to the student.
 #' @importFrom dplyr filter
@@ -14,9 +13,7 @@
 #' @export
 
 
-create_essay <- function(
-  propositions, codes, langiso, interrogation
-){
+create_essay <- function(propositions, codes, interrogation){
   
   type <- NULL
   language <- NULL
@@ -27,8 +24,7 @@ create_essay <- function(
   exercise <- propositions |>
     dplyr::filter(
       type == "Essay",
-      code %in% codes,
-      language == langiso
+      code %in% codes
     )
   
   if (nrow(exercise) == 0){

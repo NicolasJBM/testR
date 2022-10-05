@@ -4,14 +4,12 @@
 \alias{create_essay}
 \title{Create an essay}
 \usage{
-create_essay(propositions, codes, langiso, interrogation)
+create_essay(propositions, codes, interrogation)
 }
 \arguments{
 \item{propositions}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
 
 \item{codes}{Character string. Code of the question to which the propositions are linked.}
-
-\item{langiso}{Character. ISO code of the language of the question.}
 
 \item{interrogation}{Character. Question asked to the student.}
 }

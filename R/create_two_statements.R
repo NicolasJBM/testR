@@ -4,7 +4,6 @@
 #' @description Function creating the different propositions as well as the feedback associated with a given version of a question in which two statements can be either true or false.
 #' @param propositions Tibble. Table from which statements and associated feedback are selected.
 #' @param documents Character vector. List of document ids from that the selected statements should address.
-#' @param langiso Character. ISO code of the language of the question.
 #' @return Tibble. Table containing all the information about the propositions (i.e. choices) made to the student.
 #' @importFrom dplyr filter
 #' @importFrom dplyr slice_sample
@@ -16,7 +15,7 @@
 
 
 create_two_statements <- function(
-  propositions, documents, langiso
+  propositions, documents
 ){
   
   type <- NULL
@@ -28,8 +27,7 @@ create_two_statements <- function(
   selected <- propositions |>
     dplyr::filter(
       type == "Statements",
-      document %in% documents,
-      language == langiso
+      document %in% documents
     )
   
   if (base::nrow(selected) > 1){

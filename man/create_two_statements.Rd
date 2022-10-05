@@ -4,14 +4,12 @@
 \alias{create_two_statements}
 \title{Create a two-statements question}
 \usage{
-create_two_statements(propositions, documents, langiso)
+create_two_statements(propositions, documents)
 }
 \arguments{
 \item{propositions}{Tibble. Table from which statements and associated feedback are selected.}
 
 \item{documents}{Character vector. List of document ids from that the selected statements should address.}
-
-\item{langiso}{Character. ISO code of the language of the question.}
 }
 \value{
 Tibble. Table containing all the information about the propositions (i.e. choices) made to the student.

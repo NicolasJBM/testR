@@ -4,7 +4,6 @@
 #' @description Function creating a computation question by retrieving in feedback
 #' @param propositions Tibble. Table from which items (alternatives) and associated feedback are selected.
 #' @param codes Character string. Code of the question to which the propositions are linked.
-#' @param langiso Character. ISO code of the language of the question.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
 #' @param interrogation Character. Question asked to the student.
 #' @return Tibble. Table containing all the information about the propositions made to the student.
@@ -16,9 +15,7 @@
 #' @export
 
 
-create_computation <- function(
-  propositions, codes, langiso, altnbr, interrogation
-){
+create_computation <- function(propositions, codes, altnbr, interrogation){
   
   type <- NULL
   language <- NULL
@@ -27,8 +24,7 @@ create_computation <- function(
   selected <- propositions |>
     dplyr::filter(
       type == "Computation",
-      code %in% codes,
-      language == langiso
+      code %in% codes
     )
   
   if (base::nrow(selected) >= altnbr &

@@ -4,14 +4,12 @@
 \alias{create_computation}
 \title{Create a single or multiple true or false alternative selection question}
 \usage{
-create_computation(propositions, codes, langiso, altnbr, interrogation)
+create_computation(propositions, codes, altnbr, interrogation)
 }
 \arguments{
 \item{propositions}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
 
 \item{codes}{Character string. Code of the question to which the propositions are linked.}
-
-\item{langiso}{Character. ISO code of the language of the question.}
 
 \item{altnbr}{Integer. Number of propositions (i.e. choices) to offer to the student.}
 

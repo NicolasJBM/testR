@@ -4,7 +4,6 @@
 #' @description Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on alternatives.
 #' @param propositions Tibble. Table from which items (alternatives) and associated feedback are selected.
 #' @param codes Character string. Code of the question to which the propositions are linked.
-#' @param langiso Character. ISO code of the language of the question.
 #' @param situation List. The entry selected as the situation which determines which items are true.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
 #' @param correctnbr Integer. Number of correct propositions (i.e. choices) to offer to the student.
@@ -18,7 +17,7 @@
 #' @export
 
 create_alternatives <- function(
-  propositions, codes, langiso, situation, altnbr, correctnbr
+    propositions, codes, situation, altnbr, correctnbr
 ){
   
   type <- NULL
@@ -32,8 +31,7 @@ create_alternatives <- function(
   selected <- propositions |>
     dplyr::filter(
       type == "Alternatives",
-      code %in% codes,
-      language == langiso
+      code %in% codes
     ) |>
     dplyr::mutate(
       value = dplyr::case_when(

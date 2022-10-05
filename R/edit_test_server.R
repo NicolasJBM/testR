@@ -108,15 +108,34 @@ edit_test_server <- function(
           )
       })
       
+      
+      
+      
+      
+      propositions <- shiny::reactive({
+        base::load(course_paths()$propositions)
+      })
+      
+      translations <- shiny::reactive({
+        base::load(course_paths()$translations)
+      })
+      
+      
+      
+      
       # Select or create a test to edit ########################################
       
       shiny::observe({
+        
+        
         tests <- base::list.dirs(
           "5_tests", recursive = FALSE, full.names = FALSE
         )
         modrval$tests <- tests[!stringr::str_detect(tests,"archives|default")]
         base::load("2_documents/feedbacks.RData")
         modrval$feedbacks <- feedbacks
+        
+        
       })
       
       output$test_selection <- shiny::renderUI({

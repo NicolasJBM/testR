@@ -4,7 +4,6 @@
 #' @description Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on statements.
 #' @param propositions Tibble. Table from which items (statements) and associated feedback are selected.
 #' @param documents Character vector. List of document ids from that the selected statements should address.
-#' @param langiso Character. ISO code of the language of the question.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
 #' @param truenbr Integer. Number of true propositions (i.e. choices) to offer to the student.
 #' @param indication Logical. Whether the number of alternatives to select should be specified in the question.
@@ -20,7 +19,7 @@
 
 
 create_statements <- function(
-  propositions, documents, langiso, altnbr, truenbr, indication = TRUE
+  propositions, documents, altnbr, truenbr, indication = TRUE
 ){
   
   type <- NULL
@@ -31,8 +30,7 @@ create_statements <- function(
   selected <- propositions |>
     dplyr::filter(
       type == "Statements",
-      document %in% documents,
-      language == langiso
+      document %in% documents
     )
   
   truenbr <- base::min(altnbr, truenbr)
