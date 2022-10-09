@@ -5,7 +5,8 @@
 #' @param id Character. ID of the module to connect the user interface to the appropriate server side.
 #' @param filtered Reactive. List of pre-selected documents.
 #' @param course_data Reactive. Function containing all the course data loaded with the course.
-#' @param test Character. Selected test.
+#' @param tree Reactive. Selected tree.
+#' @param test Reactive.. Selected test.
 #' @param course_paths Reactive. Function containing a list of paths to the different folders and databases on local disk.
 #' @return Save the test parameters in the relevant test sub-folder in the folder "5_tests".
 #' @import shiny
@@ -49,7 +50,7 @@
 
 
 edit_test_server <- function(
-  id, filtered, course_data, test, course_paths
+  id, filtered, course_data, tree, test, course_paths
 ){
   ns <- shiny::NS(id)
   shiny::moduleServer(
@@ -85,7 +86,6 @@ edit_test_server <- function(
       version_nbr <- NULL
       nbrinbloc <- NULL
       version_id <- NULL
-      feedbacks <- NULL
       language <- NULL
       versions <- NULL
       expected <- NULL
@@ -95,8 +95,15 @@ edit_test_server <- function(
       question_path <- NULL
       version_path <- NULL
       count <- NULL
+      propositions <- NULL
+      translations <- NULL
+      folder <- NULL
+      test_name <- NULL
+      title <- NULL
       
       modrval <- shiny::reactiveValues()
+      
+      
       
       # Preselected questions ##################################################
       
@@ -110,132 +117,62 @@ edit_test_server <- function(
       
       
       
-      
-      
-      propositions <- shiny::reactive({
-        base::load(course_paths()$propositions)
-      })
-      
-      translations <- shiny::reactive({
-        base::load(course_paths()$translations)
-      })
-      
-      
-      
-      
       # Select or create a test to edit ########################################
       
       shiny::observe({
+        shiny::req(!base::is.na(tree()$course[1]))
+        shiny::req(base::nrow(test()) > 1)
         
+        modrval$tree <- tree()$course[1]
+        modrval$selected_test <- test()$test[1]
+        modrval$tests <- base::unique(course_data()$tests$test)
         
-        tests <- base::list.dirs(
-          "5_tests", recursive = FALSE, full.names = FALSE
+        shiny::req(modrval$selected_test %in% modrval$tests)
+        
+        modrval$test_folder <- base::paste0(
+          course_paths()$subfolders$tests, "/", modrval$selected_test
         )
-        modrval$tests <- tests[!stringr::str_detect(tests,"archives|default")]
-        base::load("2_documents/feedbacks.RData")
-        modrval$feedbacks <- feedbacks
         
-        
-      })
-      
-      output$test_selection <- shiny::renderUI({
-        shiny::req(base::length(modrval$tests) > 0)
-        shiny::selectInput(
-          ns("slcttest"), "Select a test:", choices = c(modrval$tests),
-          selected = modrval$tests[1], width = "100%"
-        )
-      })
-      
-      shiny::observe({
-        shiny::req(!base::is.null(input$slcttest))
-        base::load(base::paste0(
-          "5_tests/", input$slcttest, "/test_parameters.RData"
-        ))
-        check_answers <- base::length(base::unlist(base::list(
-          base::list.files(base::paste0(
-            "5_tests/", input$slcttest, "/f_answers/closed"
-          )),
-          base::list.files(base::paste0(
-            "5_tests/", input$slcttest, "/f_answers/numeric"
-          )),
-          base::list.files(base::paste0(
-            "5_tests/", input$slcttest, "/f_answers/open"
-          ))
-        )))
+        test_parameters <- test() |>
+          dplyr::mutate(
+            question_path = purrr::map_chr(
+              question,
+              function(x, y){base::paste0(y, "/", x)},
+              modrval$test_folder
+            )
+          ) |>
+          dplyr::mutate(
+            version_path = purrr::map_chr(
+              version,
+              function(x, y){base::paste0(y, "/", x)},
+              modrval$test_folder
+            )
+          )
         modrval$test_parameters <- test_parameters
+        
         modrval$questions_included <- stats::na.omit(
           base::unique(test_parameters$question)
         ) 
+        
+        base::load(course_paths()$databases$propositions)
+        modrval$propositions <- propositions
+        
+        base::load(course_paths()$databases$translations)
+        modrval$translations <- translations
+        
+        answers <- base::list.files(base::paste0(
+          modrval$test_folder, "/7_answers"
+        ))
+        check_answers <- base::length(base::unlist(answers))
         modrval$test_administered <- check_answers > 0
       })
       
-      shiny::observeEvent(input$create_test, {
-        shiny::showModal(
-          shiny::modalDialog(
-            style = "background-color:#001F3F;color:#FFF;margin-top:300px;",
-            shiny::textInput(
-              ns("new_test_name"),
-              "Name of the new test",
-              value = ""
-            ),
-            footer = tagList(
-              shiny::modalButton("Cancel"),
-              shiny::actionButton(
-                ns("add_new_test"),
-                "OK",
-                icon = shiny::icon("check"),
-                style = "background-color:#007777;color:#FFF;"
-              )
-            )
-          )
-        )
-      })
       
-      shiny::observeEvent(input$add_new_test, {
-        shiny::removeModal()
-        if (input$new_test_name %in% modrval$tests){
-          shinyalert::shinyalert(
-            "This name has already been assigned",
-            'Please choose a different name.',
-            type = "error", closeOnEsc = FALSE,
-            closeOnClickOutside = TRUE
-          )
-        } else {
-          new_test_folder <- base::paste0(
-            "5_tests/", input$new_test_name
-          )
-          fs::dir_copy("5_tests/default", new_test_folder)
-          path_param <- base::paste0(new_test_folder, "/test_parameters.RData")
-          base::load(path_param)
-          test_parameters <- test_parameters[1,] |>
-            dplyr::mutate(
-              test = input$new_test_name,
-              question = base::as.character(NA),question_path = base::as.character(NA),
-              section = base::as.character(NA), bloc = base::as.character(NA),
-              altnbr = base::as.integer(NA),points = base::as.integer(NA),
-              partial_credits = base::as.logical(NA),
-              penalty = base::as.logical(NA), version = base::as.character(NA),
-              version_path = base::as.character(NA), seed = base::as.integer(NA)
-            )
-          base::save(test_parameters, file = path_param)
-          modrval$tests <- c(modrval$tests, input$new_test_name)
-          shinyalert::shinyalert(
-            "Test created",
-            base::paste0('The test ',input$new_test_name,' has been created.'),
-            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
-          )
-        }
-      })
       
       # Edit main test parameters ##############################################
       
       output$test_definition <- shiny::renderUI({
         shiny::req(!base::is.null(modrval$test_parameters))
-        course_trees <- stringr::str_remove_all(
-          base::list.files("3_trees"),
-          ".RData$"
-        )
-        
         base::list(
           shiny::fluidRow(
             shiny::column(
@@ -245,72 +182,55 @@ edit_test_server <- function(
           ),
           shiny::fluidRow(
             shiny::column(
-              4,
-              shiny::selectInput(
-                ns("def_tree"), "Course tree",
-                choices = course_trees,
-                selected = modrval$test_parameters$tree[1]
-              ),
-              shiny::textInput(
-                ns("def_institution"), "Institution",
-                value = modrval$test_parameters$institution[1]
-              ),
-              shiny::textInput(
-                ns("def_program"), "Program",
-                value = modrval$test_parameters$program[1]
-              ),
-              shiny::selectInput(
-                ns("def_program_level"), "Program level",
-                choices = c("BSC1","BSC2","BSC3","MSC1","MSC2","PHD"),
-                selected = modrval$test_parameters$program_level[1]
-              ),
-              shiny::textInput(
-                ns("def_group"), "Group",
-                value = modrval$test_parameters$group[1]
-              )
-            ),
-            shiny::column(
-              4,
+              6,
               shiny::selectInput(
                 ns("def_test_format"), "Format",
                 choices = c("quiz","mid-term","final","assignment","resit"),
-                selected = modrval$test_parameters$test_format[1]
+                selected = modrval$test_parameters$test_format[1],
+                width = "100%"
               ),
               shiny::selectInput(
                 ns("def_test_unit"), "Unit",
                 choices = c("student","team"),
-                selected = modrval$test_parameters$test_unit[1]
+                selected = modrval$test_parameters$test_unit[1],
+                width = "100%"
               ),
               shiny::selectInput(
                 ns("def_test_assessment"), "Assessment",
                 choices = c("formative","summative"),
-                selected = modrval$test_parameters$test_assessment[1]
+                selected = modrval$test_parameters$test_assessment[1],
+                width = "100%"
               ),
               shiny::selectInput(
                 ns("def_test_documentation"), "Documentation",
                 choices = c("none","limited","open-book"),
-                selected = modrval$test_parameters$test_documentation[1]
+                selected = modrval$test_parameters$test_documentation[1],
+                width = "100%"
               ),
               shiny::selectInput(
                 ns("def_test_languages"), "Languages",
                 choices = "US",
                 selected = modrval$test_parameters$test_languages[1],
-                multiple = TRUE
+                multiple = TRUE,
+                width = "100%"
               )
             ),
             shiny::column(
-              4,
+              6,
               shiny::dateInput(
                 ns("def_test_date"), "Date",
-                value = modrval$test_parameters$test_date[1]
+                value = modrval$test_parameters$test_date[1],
+                width = "100%"
               ),
               shiny::numericInput(
                 ns("def_test_duration"), "Duration (minutes)",
-                value = modrval$test_parameters$test_duration[1]
+                value = modrval$test_parameters$test_duration[1],
+                width = "100%"
               ),
               shiny::numericInput(
                 ns("def_test_points"), "Total points",
-                value = modrval$test_parameters$test_points[1]
+                value = modrval$test_parameters$test_points[1],
+                width = "100%"
               ),
               shinyWidgets::switchInput(
                 ns("def_show_version"), "Show version name",
@@ -325,7 +245,7 @@ edit_test_server <- function(
                 labelWidth = "150px", handleWidth = "50px"
               ),
               shiny::actionButton(
-                ns("save_test_def"), "Save", icon = shiny::icon("save"),
+                ns("save_test_def"), "Save", icon = shiny::icon("floppy-disk"),
                 style = "background-color:#006600;color:#FFF;
                 width:100%;margin-top:10px;"
               )
@@ -337,12 +257,8 @@ edit_test_server <- function(
       shiny::observeEvent(input$save_test_def, {
         test_parameters <- modrval$test_parameters |>
           dplyr::mutate(
-            tree = input$def_tree,
-            institution = input$def_institution,
-            program = input$def_program,
-            program_level = input$def_program_level,
-            group = input$def_group,
-            test = input$slcttest,
+            tree = modrval$test_parameters$tree[1],
+            test = modrval$test_parameters$test[1],
             test_format = input$def_test_format,
             test_unit = input$def_test_unit,
             test_assessment = input$def_test_assessment,
@@ -359,10 +275,9 @@ edit_test_server <- function(
         
         modrval$test_parameters <- test_parameters
         path_param <- base::paste0(
-          "5_tests/", input$slcttest,"/test_parameters.RData"
+          modrval$test_folder, "/test_parameters.RData"
         )
         base::save(test_parameters, file = path_param)
-        
         shinyalert::shinyalert(
           "Test information updated!",
           base::paste0('The test ', input$slcttest, ' has been updated.'),
@@ -370,11 +285,13 @@ edit_test_server <- function(
         )
       })
       
+      
+      
       # Select questions #######################################################
       
       output$selectoldtests <- shiny::renderUI({
-        shiny::req(!base::is.null(input$slcttest))
-        existing_tests <- base::setdiff(modrval$tests, input$slcttest)
+        shiny::req(base::length(test()$test) > 0)
+        existing_tests <- base::setdiff(modrval$tests, test()$test[1])
         shinyWidgets::multiInput(
           inputId = ns("slctpriortests"),
           label = "Select prior tests to identify untested questions",
@@ -389,32 +306,37 @@ edit_test_server <- function(
           modrval$questions_included
         )
         if (base::is.null(input$slctpriortests)){
-          questions_pretested <- base::character(0)
+          modrval$questions_pretested <- base::character(0)
         } else {
-          questions_pretested <- base::character(0)
-          for (test in input$slctpriortests){
-            testquest <- base::list.files(base::paste0(
-              "5_tests/", test, "/a_questions"
-            ))
-            questions_pretested <- base::union(questions_pretested, testquest)
-          }
+          modrval$questions_pretested <- course_data()$tests |>
+            dplyr::filter(test %in% input$slctpriortests) |>
+            dplyr::select(question) |>
+            base::unlist() |>
+            base::as.character() |>
+            base::sort()
         }
-        modrval$questions_pretested <- base::intersect(
-          modrval$questions_preselected,
-          questions_pretested
-        )
-        modrval$preselected_retested <- base::intersect(
-          modrval$questions_included,
-          modrval$questions_pretested
-        )
+        
         modrval$preselected_untested <- base::setdiff(
           modrval$questions_preselected,
           modrval$questions_pretested
-        )
+        ) |>
+          base::sort()
         modrval$untested_included <- base::setdiff(
           modrval$questions_included,
           modrval$questions_pretested
-        )
+        ) |>
+          base::sort()
+        
+        modrval$preselected_pretested <- base::intersect(
+          modrval$questions_preselected,
+          modrval$questions_pretested
+        ) |>
+          base::sort()
+        modrval$pretested_included <- base::intersect(
+          modrval$questions_included,
+          modrval$questions_pretested
+        ) |>
+          base::sort()
       })
       
       output$selectuntested <- shiny::renderUI({
@@ -433,17 +355,21 @@ edit_test_server <- function(
         shinyWidgets::multiInput(
           inputId = ns("slcttested"),
           label = "Questions already tested in prior tests",
-          choices = modrval$questions_pretested,
-          selected = modrval$preselected_retested,
+          choices = modrval$preselected_pretested,
+          selected = modrval$pretested_included,
           width = "100%"
         )
       })
       
       output$question2display <- shiny::renderUI({
         questorder <- modrval$untested_included |>
-          base::union(modrval$preselected_retested) |>
-          base::union(modrval$preselected_untested) |>
-          base::union(modrval$questions_pretested)
+          base::union(modrval$pretested_included)
+        add_selection <- base::sort(base::setdiff(
+          modrval$questions_preselected,
+          questorder
+        ))
+        questorder <- questorder |>
+          base::union(add_selection)
         sampled_questions <- course_data()$documents |>
           dplyr::filter(file %in% base::union(
             modrval$questions_included, questions()$file
@@ -462,48 +388,22 @@ edit_test_server <- function(
         )
       })
       
-      selected_statistics <- shiny::reactive({
-        shiny::req(!base::is.null(input$slctquest2display))
-        shiny::req(!base::is.null(course_data()$documents))
-        if (shiny::req(input$slctquest2display %in% course_data()$documents$file)){
-          course_data()$documents |>
-            dplyr::filter(file == input$slctquest2display) |>
-            dplyr::select(code, language) |>
-            dplyr::left_join(course_data()$document_parameters, by = c("code","language"))
-        } else NULL
-      })
-      
       output$viewquestionstats <- shiny::renderUI({
-        shiny::req(!base::is.null(input$selecteddoc))
-        shiny::req(input$selecteddoc != "")
-        editR::make_infobox(course_data, input$selecteddoc, "results")
+        shiny::req(!base::is.null(input$slctquest2display))
+        shiny::req(input$slctquest2display != "")
+        editR::make_infobox(course_data, input$slctquest2display, "results")
       })
       
       output$viewquestion <- shiny::renderUI({
+        shiny::req(!base::is.null(questions()))
         shiny::req(input$slctquest2display)
-        shiny::req(!base::is.null(course_data()$documents))
-        shiny::req(input$slctquest2display %in% course_data()$documents$file)
-        base::load("2_documents/tags.RData")
-        feedbacks <- modrval$feedbacks
-        base::load("5_tests/default/test_parameters.RData")
-        selected <- course_data()$documents |>
-          dplyr::filter(file == input$slctquest2display) |>
-          dplyr::left_join(dplyr::select(
-            course_data()$document_types, type, icon
-          ), by = "type")
-        filepath <- base::paste0("2_documents/main_language/", input$slctquest2display)
-        title <- editR::make_title_display(selected, tags)
-        as_latex <- FALSE
-        record_version <- FALSE
-        base::list(
-          shiny::tags$h3(title),
-          base::suppressWarnings(
-            shiny::withMathJax(shiny::HTML(knitr::knit2html(
-              text = base::readLines(filepath),
-              fragment.only = TRUE, quiet = TRUE
-            )))
-          )
+        shiny::req(input$slctquest2display %in% questions()$file)
+        to_view <- questions() |>
+          dplyr::filter(file == input$slctquest2display)
+        to_view$filepath <- base::paste0(
+          course_paths()$subfolders$original, "/", to_view$file
         )
+        editR::view_document(to_view, TRUE, course_data, course_paths)
       })
       
       shiny::observeEvent(input$applyselection, {
@@ -544,7 +444,7 @@ edit_test_server <- function(
           add <- tibble::tibble(
             question = add_questions,
             question_path = base::paste0(
-              "5_tests/", input$slcttest, "/a_questions/", add_questions
+              modrval$test_folder, "/1_questions/", add_questions
             ),
             section = "Z",
             bloc = base::toupper(
@@ -558,7 +458,7 @@ edit_test_server <- function(
             dplyr::mutate(version = base::paste0(section,bloc,1,1,".Rmd")) |>
             dplyr::mutate(
               version_path = base::paste0(
-                "5_tests/", input$slcttest, "/b_versions/", version
+                modrval$test_folder, "/2_versions/", version
               ),
               seed = base::ceiling(
                 stats::runif(base::length(add_questions))* 10000
@@ -570,21 +470,21 @@ edit_test_server <- function(
           test_parameters <- dplyr::bind_rows(test_parameters, add)
           
           base::save(test_parameters, file = base::paste0(
-            "5_tests/", input$slcttest, "/test_parameters.RData"
+            modrval$test_folder, "/test_parameters.RData"
           ))
           
           for (q in remove_questions){
             file <- base::paste0(
-              "5_tests/", input$slcttest, "/a_questions/", q
+              modrval$test_folder, "/1_questions/", q
             )
             if (base::file.exists(file)) base::file.remove(file)
           }
           
           for (q in add_questions){
             base::file.copy(
-              from = base::paste0("2_documents/main_language/", q),
+              from = base::paste0(course_paths()$subfolders$original, "/", q),
               to = base::paste0(
-                "5_tests/", input$slcttest, "/a_questions/", q
+                modrval$test_folder, "/1_questions/", q
               ),
               overwrite = FALSE
             )
@@ -693,10 +593,10 @@ edit_test_server <- function(
             dplyr::mutate(seed = base::as.integer(seed)) |>
             dplyr::mutate(
               question_path = base::paste0(
-                "5_tests/", input$slcttest, "/a_questions/", question
+                modrval$test_folder, "/1_questions/", question
               ),
               version_path = base::paste0(
-                "5_tests/", input$slcttest, "/b_versions/", version
+                modrval$test_folder, "/2_versions/", version
               )
             )
           
@@ -706,8 +606,7 @@ edit_test_server <- function(
           test_parameters <- updatequest
           
           base::save(test_parameters, file = base::paste0(
-            "5_tests/",
-            input$slcttest,
+            modrval$test_folder,
             "/test_parameters.RData"
           ))
           
@@ -740,13 +639,13 @@ edit_test_server <- function(
           
           remove <- base::setdiff(
             base::list.files(base::paste0(
-              "5_tests/", input$slcttest, "/b_versions"
+              modrval$test_folder, "/2_versions"
             ), full.names = FALSE),
             base::unique(test_parameters$version)
           )
           if (base::length(remove) > 0){
             base::file.remove(base::paste(
-              base::paste0("5_tests/", input$slcttest, "/b_versions/"),
+              base::paste0(modrval$test_folder, "/2_versions/"),
               remove, sep = ""
             ))
           }
@@ -769,7 +668,7 @@ edit_test_server <- function(
             dplyr::select(course_data()$documents, file, code, language),
             by = "file"
           ) |>
-          dplyr::left_join(course_data()$document_parameters, by = c("code","language")) |>
+          dplyr::left_join(course_data()$document_parameters, by = c("file")) |>
           dplyr::select(
             file, section, bloc, points, test_points, test_duration, success
           )
@@ -827,7 +726,7 @@ edit_test_server <- function(
             shinydashboard::valueBox(
               dictinct_questions$count,
               "Questions",
-              icon = shiny::icon("question-circle"),
+              icon = shiny::icon("circle-question"),
               color = "blue",
               width = 12
             )
@@ -857,7 +756,7 @@ edit_test_server <- function(
             shinydashboard::valueBox(
               dictinct_questions$expected,
               "Expected average",
-              icon = shiny::icon("sort-numeric-up-alt"),
+              icon = shiny::icon("arrow-up-9-1"),
               color = dictinct_questions$expect_color,
               width = 12
             )
@@ -886,22 +785,20 @@ edit_test_server <- function(
         ########################################################################
         
         
-        
-        
-        
         shiny::selectInput(
           ns("selectedtestquestion"),
           "Question to edit",
           choices = testquest,
-          selected = testquest[1]
+          selected = testquest[1],
+          width = "100%"
         )
       })
       
       output$edittestquestion <- shiny::renderUI({
         shiny::req(!base::is.null(input$selectedtestquestion))
         filepath <- base::paste0(
-          "5_tests/", input$slcttest,
-          "/a_questions/", input$selectedtestquestion
+          modrval$test_folder,
+          "/1_questions/", input$selectedtestquestion
         )
         if (base::file.exists(filepath)){
           lines <- base::readLines(filepath)
@@ -931,8 +828,9 @@ edit_test_server <- function(
           base::writeLines(
             edited_question,
             base::paste0(
-              "5_tests/", input$slcttest,
-              "/a_questions/", selected_question
+              modrval$test_folder,
+              "/1_questions/",
+              selected_question
             ),
             useBytes = TRUE
           )
@@ -954,33 +852,22 @@ edit_test_server <- function(
       output$viewtestquestion <- shiny::renderUI({
         shiny::req(input$selectedtestquestion)
         input$savetestquestion
-        filepath <- base::paste0(
-          "5_tests/", input$slcttest,
-          "/a_questions/", input$selectedtestquestion
-        )
-        if (base::file.exists(filepath)){
-          lines <- base::readLines(filepath)
-          test_parameters <- modrval$test_parameters |>
-            dplyr::mutate(version = question) |>
-            dplyr::group_by(question) |>
-            dplyr::slice_sample(n = 1) |>
-            dplyr::ungroup()
-          feedbacks <- modrval$feedbacks
-          as_latex <- FALSE
-          record_version <- FALSE
-          base::suppressWarnings(
-            shiny::withMathJax(shiny::HTML(knitr::knit2html(
-              text = lines,
-              fragment.only = TRUE, quiet = TRUE
-            )))
-          )
-        }
+        document_to_edit <- course_data()$documents |>
+          dplyr::filter(file == input$selectedtestquestion) |>
+          dplyr::mutate(filepath = base::paste0(
+            modrval$test_folder,
+            "/1_questions/",
+            input$selectedtestquestion
+          ))
+        editR::view_document(document_to_edit, TRUE, course_data, course_paths)
       })
+      
+      
       
       # Check and publish ######################################################
       
       output$textemplate_selection <- shiny::renderUI({
-        templates <- base::list.files("1_preparation/templates/test")
+        templates <- base::list.files(course_paths()$subfolders$tex)
         templates <- c("", base::unique(stringr::str_remove_all(
           templates, "_questions.tex$|_solutions.tex$"
         )))
@@ -1102,8 +989,7 @@ edit_test_server <- function(
             )
           
           base::save(test_parameters, file = base::paste0(
-            "5_tests/",
-            input$slcttest,
+            modrval$test_folder,
             "/test_parameters.RData"
           ))
           
@@ -1114,26 +1000,23 @@ edit_test_server <- function(
       
       output$displayversion <- shiny::renderUI({
         shiny::req(!base::is.null(input$slctversion))
-        filepath <- base::paste0(
-          "5_tests/", input$slcttest,
-          "/b_versions/", input$slctversion
+        version_to_view <- course_data()$documents |>
+          dplyr::left_join(
+            dplyr::select(modrval$test_parameters, file = question, version),
+            by = "file"
+          ) |>
+          dplyr::filter(version == input$slctversion) |>
+          dplyr::mutate(filepath = base::paste0(
+            modrval$test_folder,
+            "/2_versions/",
+            input$slctversion
+          ))
+        editR::view_document(
+          version_to_view, TRUE,
+          course_data, course_paths,
+          modrval$test_parameters
         )
-        if (base::file.exists(filepath)){
-          lines <- base::readLines(filepath)
-          test_parameters <- modrval$test_parameters
-          feedbacks <- modrval$feedbacks
-          as_latex <- FALSE
-          record_version <- FALSE
-          base::suppressWarnings(
-            shiny::withMathJax(shiny::HTML(knitr::knit2html(
-              text = lines,
-              fragment.only = TRUE, quiet = TRUE
-            )))
-          )
-        }
       })
-      
-      
       
       
       
@@ -1152,7 +1035,8 @@ edit_test_server <- function(
         } else {
           testR::export_test_to_pdf(
             modrval$test_parameters,
-            modrval$feedbacks,
+            modrval$propositions,
+            modrval$translations,
             input$slcttextemplate
           )
           shinyalert::shinyalert(
@@ -1165,7 +1049,11 @@ edit_test_server <- function(
       
       
       shiny::observeEvent(input$export_to_blackboard, {
-        testR::export_test_to_blackboard(modrval$test_parameters, modrval$feedbacks)
+        testR::export_test_to_blackboard(
+          modrval$test_parameters,
+          modrval$propositions,
+          modrval$translations
+        )
         shinyalert::shinyalert(
           title = "Export generated for Blackboard!",
           text = "You can now retrieve the file in the e_output directory of the test folder.",

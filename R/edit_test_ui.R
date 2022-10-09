@@ -14,22 +14,6 @@ edit_test_ui <- function(id){
   ns <- shiny::NS(id)
   base::list(
     
-    shiny::fluidRow(
-      shiny::column(
-        9,
-        shiny::uiOutput(ns("test_selection"))
-      ),
-      shiny::column(
-        3,
-        shiny::actionButton(
-          ns("create_test"), "New", icon = shiny::icon("magic"),
-          style = "background-color:#003366;color:#FFF;
-          width:100%;margin-top:25px;"
-        )
-      )
-    ),
-    
-    
     shinydashboard::tabBox(
       side = "left", width = "100%",
       shiny::tabPanel(
@@ -60,24 +44,24 @@ edit_test_ui <- function(id){
         )
       ),
       shiny::tabPanel(
-        title = shiny::tagList(shiny::icon("random"),"Organization"),
+        title = shiny::tagList(shiny::icon("shuffle"),"Organization"),
         shiny::uiOutput(ns("test_statistics")),
         shiny::actionButton(
           ns("save_question_organization"), "Save questions",
-          icon = shiny::icon("save"),
+          icon = shiny::icon("floppy-disk"),
           style = "background-color:#006633;color:#FFF;width:100%;
         margin-top:10px;margin-bottom:10px;"
         ),
         rhandsontable::rHandsontableOutput(ns("question_organization"))
       ),
       shiny::tabPanel(
-        title = shiny::tagList(shiny::icon("edit"),"Edition"),
+        title = shiny::tagList(shiny::icon("pen-to-square"),"Edition"),
         shiny::fluidRow(
           shiny::column(
             6,
             shiny::uiOutput(ns("testquestion2edit")),
             shiny::actionButton(
-              ns("savetestquestion"), "Save", icon = shiny::icon("save"),
+              ns("savetestquestion"), "Save", icon = shiny::icon("floppy-disk"),
               style = "background-color:#006633;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"
             ),
@@ -107,7 +91,7 @@ edit_test_ui <- function(id){
               shiny::column(
                 6,
                 shiny::actionButton(
-                  ns("savenewseed"), "Save", icon = shiny::icon("save"),
+                  ns("savenewseed"), "Save", icon = shiny::icon("floppy-disk"),
                   style = "background-color:#006633;color:#FFF;width:100%;
                 margin-top:25px;"
                 )

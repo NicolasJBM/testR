@@ -4,7 +4,7 @@
 \alias{edit_test_server}
 \title{Create tests.}
 \usage{
-edit_test_server(id, filtered, course_data, test, course_paths)
+edit_test_server(id, filtered, course_data, tree, test, course_paths)
 }
 \arguments{
 \item{id}{Character. ID of the module to connect the user interface to the appropriate server side.}
@@ -13,7 +13,9 @@ edit_test_server(id, filtered, course_data, test, course_paths)
 
 \item{course_data}{Reactive. Function containing all the course data loaded with the course.}
 
-\item{test}{Character. Selected test.}
+\item{tree}{Reactive. Selected tree.}
+
+\item{test}{Reactive.. Selected test.}
 
 \item{course_paths}{Reactive. Function containing a list of paths to the different folders and databases on local disk.}
 }

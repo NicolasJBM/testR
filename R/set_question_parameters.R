@@ -14,7 +14,7 @@
 
 set_question_parameters <- function(versionid, test_parameters = NA, as_latex = FALSE, record_version = FALSE){
   
-  if (base::is.na(test_parameters)){
+  if (base::length(test_parameters) == 1){
     test_parameters <- tibble::tibble(
       test = "default",
       show_version = FALSE,
