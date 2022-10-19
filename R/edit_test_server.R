@@ -659,7 +659,8 @@ edit_test_server <- function(
       })
       
       output$test_statistics <- shiny::renderUI({
-        
+        shiny::req(!base::is.null(modrval$test_parameters))
+        shiny::req(base::nrow(modrval$test_parameters) > 0)
         base_test_statistics <- modrval$test_parameters |>
           dplyr::select(
             file = question, section, bloc, points, test_points, test_duration
