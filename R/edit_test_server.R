@@ -361,45 +361,40 @@ edit_test_server <- function(
         )
       })
       
-      output$question2display <- shiny::renderUI({
+      display_list <- shiny::reactive({
+        shiny::req(!base::is.null(course_data()$documents))
+        shiny::req(base::length(questions()) > 1)
         questorder <- modrval$untested_included |>
           base::union(modrval$pretested_included)
         add_selection <- base::sort(base::setdiff(
           modrval$questions_preselected,
           questorder
         ))
-        questorder <- questorder |>
-          base::union(add_selection)
+        questorder <- base::union(questorder, add_selection)
         sampled_questions <- course_data()$documents |>
-          dplyr::filter(file %in% base::union(
-            modrval$questions_included, questions()$file
-          )) |>
+          dplyr::filter(file %in% questorder) |>
           dplyr::arrange(base::match(file, questorder))
-        sampled <- sampled_questions$file
-        base::names(sampled) <- base::paste(
-          sampled_questions$file,
-          sampled_questions$title,
-          sep = " - "
-        )
-        shiny::selectInput(
-          ns("slctquest2display"), "Select a question",
-          choices = sampled, selected = sampled[1],
-          width = "100%"
-        )
+        to_display <-sampled_questions$file
+        base::names(to_display) <- sampled_questions$title
+        to_display
       })
       
+      question_to_display <- editR::selection_server(
+        "slctquest2disp", display_list
+      )
+      
       output$viewquestionstats <- shiny::renderUI({
-        shiny::req(!base::is.null(input$slctquest2display))
-        shiny::req(input$slctquest2display != "")
-        editR::make_infobox(course_data, input$slctquest2display, "results")
+        shiny::req(!base::is.null(question_to_display()))
+        shiny::req(question_to_display() != "")
+        editR::make_infobox(course_data, question_to_display(), "results")
       })
       
       output$viewquestion <- shiny::renderUI({
         shiny::req(!base::is.null(questions()))
-        shiny::req(input$slctquest2display)
-        shiny::req(input$slctquest2display %in% questions()$file)
+        shiny::req(question_to_display())
+        shiny::req(question_to_display() %in% questions()$file)
         to_view <- questions() |>
-          dplyr::filter(file == input$slctquest2display)
+          dplyr::filter(file == question_to_display())
         to_view$filepath <- base::paste0(
           course_paths()$subfolders$original, "/", to_view$file
         )
@@ -767,39 +762,31 @@ edit_test_server <- function(
       
       # Edit questions #########################################################
       
-      output$testquestion2edit <- shiny::renderUI({
+      edit_list <- shiny::reactive({
         shiny::req(!base::is.null(modrval$test_parameters))
         test_questions <- course_data()$documents |>
           dplyr::filter(
             file %in% base::unique(modrval$test_parameters$question)
           )
         testquest <- test_questions$file
-        base::names(testquest) <- base::paste(
-          test_questions$file,
-          test_questions$title,
-          sep = " - "
-        )
-        
-        
-        ########################################################################
-        ####   NEED TO ADD THE SELECTION OF OTHER LANGUAGES QUESTIONS      #####
-        ########################################################################
-        
-        
-        shiny::selectInput(
-          ns("selectedtestquestion"),
-          "Question to edit",
-          choices = testquest,
-          selected = testquest[1],
-          width = "100%"
-        )
+        base::names(testquest) <- test_questions$file
+        testquest
       })
       
+      question_to_edit <- editR::selection_server("slctquestion2edit", edit_list)
+      
+      
+      
+      ########################################################################
+      ####   NEED TO ADD THE SELECTION OF OTHER LANGUAGES QUESTIONS      #####
+      ########################################################################
+      
+      
       output$edittestquestion <- shiny::renderUI({
-        shiny::req(!base::is.null(input$selectedtestquestion))
+        shiny::req(!base::is.null(question_to_edit()))
         filepath <- base::paste0(
           modrval$test_folder,
-          "/1_questions/", input$selectedtestquestion
+          "/1_questions/", question_to_edit()
         )
         if (base::file.exists(filepath)){
           lines <- base::readLines(filepath)
@@ -822,7 +809,7 @@ edit_test_server <- function(
             showCancelButton = TRUE, showConfirmButton = FALSE
           )
         } else {
-          selected_question <- shiny::isolate({ input$selectedtestquestion })
+          selected_question <- shiny::isolate({ question_to_edit() })
           edited_question <- shiny::isolate({ input$editedtestquest })
           shiny::req(!base::is.null(selected_question))
           shiny::req(!base::is.null(edited_question))
@@ -836,7 +823,7 @@ edit_test_server <- function(
             useBytes = TRUE
           )
           versions_to_change <- modrval$test_parameters |>
-            dplyr::filter(question == input$selectedtestquestion) |>
+            dplyr::filter(question == question_to_edit()) |>
             dplyr::select(question_path, version, version_path)
           for (i in base::seq_len(base::nrow(versions_to_change))){
             lines <- base::readLines(versions_to_change$question_path[i])
@@ -851,14 +838,14 @@ edit_test_server <- function(
       })
       
       output$viewtestquestion <- shiny::renderUI({
-        shiny::req(input$selectedtestquestion)
+        shiny::req(question_to_edit())
         input$savetestquestion
         document_to_edit <- course_data()$documents |>
-          dplyr::filter(file == input$selectedtestquestion) |>
+          dplyr::filter(file == question_to_edit()) |>
           dplyr::mutate(filepath = base::paste0(
             modrval$test_folder,
             "/1_questions/",
-            input$selectedtestquestion
+            question_to_edit()
           ))
         editR::view_document(document_to_edit, TRUE, course_data, course_paths)
       })

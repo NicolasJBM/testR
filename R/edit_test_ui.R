@@ -37,7 +37,7 @@ edit_test_ui <- function(id){
           ),
           shiny::column(
             8,
-            shiny::uiOutput(ns("question2display")),
+            shiny::column(12, editR::selection_ui(ns("slctquest2disp"))),
             shiny::uiOutput(ns("viewquestionstats")),
             shiny::uiOutput(ns("viewquestion"))
           )
@@ -59,7 +59,7 @@ edit_test_ui <- function(id){
         shiny::fluidRow(
           shiny::column(
             6,
-            shiny::uiOutput(ns("testquestion2edit")),
+            shiny::column(12, editR::selection_ui(ns("slctquestion2edit"))),
             shiny::actionButton(
               ns("savetestquestion"), "Save", icon = shiny::icon("floppy-disk"),
               style = "background-color:#006633;color:#FFF;width:100%;
