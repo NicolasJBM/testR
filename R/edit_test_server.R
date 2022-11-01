@@ -133,25 +133,10 @@ edit_test_server <- function(
           course_paths()$subfolders$tests, "/", modrval$selected_test
         )
         
-        test_parameters <- test() |>
-          dplyr::mutate(
-            question_path = purrr::map_chr(
-              question,
-              function(x, y){base::paste0(y, "/", x)},
-              modrval$test_folder
-            )
-          ) |>
-          dplyr::mutate(
-            version_path = purrr::map_chr(
-              version,
-              function(x, y){base::paste0(y, "/", x)},
-              modrval$test_folder
-            )
-          )
-        modrval$test_parameters <- test_parameters
+        modrval$test_parameters <- test()
         
         modrval$questions_included <- stats::na.omit(
-          base::unique(test_parameters$question)
+          base::unique(test()$question)
         ) 
         
         base::load(course_paths()$databases$propositions)
@@ -264,7 +249,7 @@ edit_test_server <- function(
             test_assessment = input$def_test_assessment,
             test_documentation = input$def_test_documentation,
             test_languages = base::paste(
-              input$def_test_languages, collapse = "; "
+              input$def_test_languages, collapse = ";"
             ),
             test_date = input$def_test_date,
             test_duration = input$def_test_duration,
@@ -418,7 +403,8 @@ edit_test_server <- function(
           }
           
           test_parameters <- modrval$test_parameters
-          test_information <- test_parameters[1,1:16]
+          test_information <- test_parameters[1,1:12]
+          languages <- base::strsplit(test_information$test_languages[1], ";")
           
           remove_questions <- base::setdiff(
             base::unique(test_parameters$question),
@@ -438,9 +424,6 @@ edit_test_server <- function(
           
           add <- tibble::tibble(
             question = add_questions,
-            question_path = base::paste0(
-              modrval$test_folder, "/1_questions/", add_questions
-            ),
             section = "Z",
             bloc = base::toupper(
               letters[base::seq_len(base::length(add_questions))]
@@ -452,9 +435,6 @@ edit_test_server <- function(
           ) |>
             dplyr::mutate(version = base::paste0(section,bloc,1,1,".Rmd")) |>
             dplyr::mutate(
-              version_path = base::paste0(
-                modrval$test_folder, "/2_versions/", version
-              ),
               seed = base::ceiling(
                 stats::runif(base::length(add_questions))* 10000
               )
@@ -469,20 +449,36 @@ edit_test_server <- function(
           ))
           
           for (q in remove_questions){
-            file <- base::paste0(
-              modrval$test_folder, "/1_questions/", q
-            )
-            if (base::file.exists(file)) base::file.remove(file)
+            for (l in languages){
+              file <- base::paste0(
+                modrval$test_folder, "/1_questions/",
+                stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
+              )
+              if (base::file.exists(file)) base::file.remove(file)
+            }
           }
           
           for (q in add_questions){
-            base::file.copy(
-              from = base::paste0(course_paths()$subfolders$original, "/", q),
-              to = base::paste0(
-                modrval$test_folder, "/1_questions/", q
-              ),
-              overwrite = FALSE
-            )
+            for (l in languages){
+              file <- stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
+              origin <- base::paste0(
+                course_paths()$subfolders$original, "/", file
+              )
+              if (!base::file.exists(origin)){
+                origin <- base::paste0(
+                  course_paths()$subfolders$translated, "/", file
+                )
+              }
+              if (base::file.exists(origin)){
+                base::file.copy(
+                  from = origin,
+                  to = base::paste0(
+                    modrval$test_folder, "/1_questions/", file
+                  ),
+                  overwrite = FALSE
+                )
+              }
+            }
           }
           
           modrval$test_parameters <- test_parameters
@@ -495,6 +491,8 @@ edit_test_server <- function(
           )
         }
       })
+      
+      
       
       # Organize questions #####################################################
       
@@ -543,8 +541,8 @@ edit_test_server <- function(
         } else {
           
           test_parameters <- modrval$test_parameters
-          
-          test_info <- test_parameters[1,1:16]
+          test_information <- test_parameters[1,1:12]
+          languages <- base::strsplit(test_information$test_languages[1], ";")
           
           initial_versions <- test_parameters |>
             dplyr::select(question, version, seed) |>
@@ -585,17 +583,9 @@ edit_test_server <- function(
                 if (base::is.na(x)) base::ceiling(stats::runif(1)*10000) else x
               })
             ) |>
-            dplyr::mutate(seed = base::as.integer(seed)) |>
-            dplyr::mutate(
-              question_path = base::paste0(
-                modrval$test_folder, "/1_questions/", question
-              ),
-              version_path = base::paste0(
-                modrval$test_folder, "/2_versions/", version
-              )
-            )
+            dplyr::mutate(seed = base::as.integer(seed))
           
-          updatequest <- dplyr::bind_cols(test_info, updatequest) |>
+          updatequest <- dplyr::bind_cols(test_information, updatequest) |>
             dplyr::select(base::names(test_parameters))
           
           test_parameters <- updatequest
@@ -605,39 +595,39 @@ edit_test_server <- function(
             "/test_parameters.RData"
           ))
           
-          
-          
-          
-          
-          ######################################################################
-          ####   NEED TO ADD THE TRANSFER OF QUESTIONS AND CREATION OF     #####
-          ####   VERSIONS IN OTHER LANGUAGES HERE                          #####
-          ####   THESE VERSIONS SHOULD BE APPENDED TO PARAMETERS           #####
-          ####   TO ALLOW FOR DEFFERENT SEEDS                              #####
-          ######################################################################
-          
-          
-          
-          
-          
           for (i in base::seq_len(base::nrow(test_parameters))){
-            lines <- base::readLines(test_parameters$question_path[i])
-            lines[2] <- base::paste0(
-              'versionid <- "', test_parameters$version[i],'"'
-            )
-            base::writeLines(
-              lines, test_parameters$version_path[i], useBytes = TRUE
-            )
+            for (l in languages){
+              q <- test_parameters$question[i]
+              q <- stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
+              q <- base::paste0(modrval$test_folder, "/1_questions/", q)
+              v <- test_parameters$version[i]
+              v <- stringr::str_replace(v, "^..", l)
+              v <- base::paste0(modrval$test_folder, "/2_versions/", v)
+              lines <- base::readLines(q)
+              lines[2] <- base::paste0(
+                'versionid <- "', test_parameters$version[i],'"'
+              )
+              base::writeLines(lines, v, useBytes = TRUE)
+            }
           }
           
           modrval$test_parameters <- test_parameters
           
-          remove <- base::setdiff(
-            base::list.files(base::paste0(
-              modrval$test_folder, "/2_versions"
-            ), full.names = FALSE),
-            base::unique(test_parameters$version)
-          )
+          all_versions <- base::list.files(base::paste0(
+            modrval$test_folder, "/2_versions"
+          ), full.names = FALSE)
+          
+          all_expected <- c()
+          for (l in languages){
+            all_expected <- c(
+              all_expected,
+              stringr::str_replace_all(
+                base::unique(test_parameters$version), "^..", l
+              )
+            )
+          }
+          
+          remove <- base::setdiff(all_versions, all_expected)
           if (base::length(remove) > 0){
             base::file.remove(base::paste(
               base::paste0(modrval$test_folder, "/2_versions/"),
@@ -675,7 +665,7 @@ edit_test_server <- function(
           )) |>
           dplyr::mutate(expected = points * success)
         
-        dictinct_questions <- base_test_statistics |>
+        distinct_questions <- base_test_statistics |>
           dplyr::group_by(section, bloc) |>
           dplyr::summarise(
             count = 1,
@@ -720,7 +710,7 @@ edit_test_server <- function(
           shiny::column(
             3,
             shinydashboard::valueBox(
-              dictinct_questions$count,
+              distinct_questions$count,
               "Questions",
               icon = shiny::icon("circle-question"),
               color = "blue",
@@ -730,35 +720,44 @@ edit_test_server <- function(
           shiny::column(
             3,
             shinydashboard::valueBox(
-              dictinct_questions$minute_per_question,
+              distinct_questions$minute_per_question,
               "Minutes per question",
               icon = shiny::icon("stopwatch"),
-              color = dictinct_questions$minpquest_color,
+              color = distinct_questions$minpquest_color,
               width = 12
             )
           ),
           shiny::column(
             3,
             shinydashboard::valueBox(
-              dictinct_questions$points,
+              distinct_questions$points,
               "Maximum points",
               icon = shiny::icon("award"),
-              color = dictinct_questions$points_color,
+              color = distinct_questions$points_color,
               width = 12
             )
           ),
           shiny::column(
             3,
             shinydashboard::valueBox(
-              dictinct_questions$expected,
+              distinct_questions$expected,
               "Expected average",
               icon = shiny::icon("arrow-up-9-1"),
-              color = dictinct_questions$expect_color,
+              color = distinct_questions$expect_color,
               width = 12
             )
           )
         )
       })
+      
+      
+      
+      
+      
+      
+      
+      
+      
       
       # Edit questions #########################################################
       
