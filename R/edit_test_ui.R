@@ -59,6 +59,7 @@ edit_test_ui <- function(id){
         shiny::fluidRow(
           shiny::column(
             6,
+            shiny::uiOutput(ns("slcteditquestlang")),
             shiny::column(12, editR::selection_ui(ns("slctquestion2edit"))),
             shiny::actionButton(
               ns("savetestquestion"), "Save", icon = shiny::icon("floppy-disk"),
@@ -78,6 +79,7 @@ edit_test_ui <- function(id){
         shiny::fluidRow(
           shiny::column(
             4,
+            shiny::uiOutput(ns("selectlanguage")),
             shiny::uiOutput(ns("selectsection")),
             shiny::uiOutput(ns("selectbloc")),
             shiny::uiOutput(ns("selectquestion")),
@@ -144,6 +146,12 @@ edit_test_ui <- function(id){
             shiny::actionButton(
               ns("export_to_qti21"), "QTI 2.1", icon = shiny::icon("download"),
               style = "background-color:#336600;color:#FFF;width:100%;
+            margin-top:10px;margin-bottom:10px;"
+            ),
+            shiny::tags$hr(),
+            shiny::actionButton(
+              ns("openexamfolder"), "Open folder", icon = shiny::icon("folder"),
+              style = "background-color:#222222;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"
             )
           )

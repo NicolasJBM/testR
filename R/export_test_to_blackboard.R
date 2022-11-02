@@ -3,7 +3,9 @@
 #' @author Nicolas Mangin
 #' @description Function creating tests to be uploaded on Blackboard.
 #' @param test_parameters Tibble. List of questions with associated parameters.
-#' @param feedbacks Tibble. List of propositions, criteria, and associated feedback.
+#' @param propositions Tibble. List of propositions, criteria, and associated explanations.
+#' @param translations Tibble. Table containing translations of items and explanations.
+#' @param exam_folder Character. Path to the exam folder.
 #' @return Path to the zip files containing the test(s)
 #' @importFrom shinybusy show_modal_spinner
 #' @importFrom dplyr select
@@ -16,7 +18,9 @@
 
 
 
-export_test_to_blackboard <- function(test_parameters, feedbacks){
+export_test_to_blackboard <- function(
+    test_parameters, propositions, translations, exam_folder
+){
   
   shinybusy::show_modal_spinner(
     spin = "orbit",
@@ -27,12 +31,10 @@ export_test_to_blackboard <- function(test_parameters, feedbacks){
   bloc <- NULL
   points <- NULL
   
-  initwd <- base::getwd()
   testname <- test_parameters$test[1]
-  testwd <- base::paste0(initwd, "/5_tests/", testname)
-  docdir <- base::paste0(testwd, "/b_versions")
-  tmpdir <- base::paste0(testwd, "/c_tmp")
-  outdir <- base::paste0(testwd, "/e_output")
+  docdir <- base::paste0(exam_folder, "/2_versions")
+  tmpdir <- base::paste0(exam_folder, "/3_temporary")
+  outdir <- base::paste0(exam_folder, "/4_solutions")
   
   base::unlink(tmpdir, recursive = TRUE, force = TRUE, expand = TRUE)
   base::dir.create(tmpdir)
@@ -50,7 +52,8 @@ export_test_to_blackboard <- function(test_parameters, feedbacks){
   record_version <<- record_version
   as_latex <<- as_latex
   test_parameters <<- test_parameters
-  feedbacks <<- feedbacks
+  propositions <<- propositions
+  translations <<- translations
   
   exams::exams2blackboard(
     file = question_list$version,
@@ -70,7 +73,7 @@ export_test_to_blackboard <- function(test_parameters, feedbacks){
   record_version <<- NULL
   as_latex <<- NULL
   test_parameters <<- NULL
-  feedbacks <<- NULL
+  propositions <<- NULL
   
   shinybusy::remove_modal_spinner()
 }

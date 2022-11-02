@@ -4,12 +4,21 @@
 \alias{export_test_to_blackboard}
 \title{Export test to blackboard}
 \usage{
-export_test_to_blackboard(test_parameters, feedbacks)
+export_test_to_blackboard(
+  test_parameters,
+  propositions,
+  translations,
+  exam_folder
+)
 }
 \arguments{
 \item{test_parameters}{Tibble. List of questions with associated parameters.}
 
-\item{feedbacks}{Tibble. List of propositions, criteria, and associated feedback.}
+\item{propositions}{Tibble. List of propositions, criteria, and associated explanations.}
+
+\item{translations}{Tibble. Table containing translations of items and explanations.}
+
+\item{exam_folder}{Character. Path to the exam folder.}
 }
 \value{
 Path to the zip files containing the test(s)

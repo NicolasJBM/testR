@@ -9,42 +9,65 @@
 #' @param test Reactive.. Selected test.
 #' @param course_paths Reactive. Function containing a list of paths to the different folders and databases on local disk.
 #' @return Save the test parameters in the relevant test sub-folder in the folder "5_tests".
-#' @import shiny
-#' @importFrom stringr str_detect
-#' @importFrom stringr str_remove_all
-#' @importFrom rhandsontable renderRHandsontable
-#' @importFrom tibble tibble
-#' @importFrom dplyr group_by
-#' @importFrom dplyr summarise
-#' @importFrom dplyr bind_rows
-#' @importFrom dplyr select
-#' @importFrom dplyr n
-#' @importFrom dplyr mutate
 #' @importFrom dplyr arrange
-#' @importFrom dplyr left_join
-#' @importFrom dplyr filter
-#' @importFrom dplyr slice_sample
+#' @importFrom dplyr bind_cols
+#' @importFrom dplyr bind_rows
 #' @importFrom dplyr case_when
-#' @importFrom rhandsontable rhandsontable
-#' @importFrom rhandsontable hot_cols
-#' @importFrom rhandsontable hot_context_menu
-#' @importFrom shinyalert shinyalert
-#' @importFrom fs dir_copy
-#' @importFrom tidyr replace_na
-#' @importFrom rhandsontable hot_to_r
-#' @importFrom stats na.omit
-#' @importFrom tidyr nest
-#' @importFrom tidyr unnest
-#' @importFrom dplyr ungroup
+#' @importFrom dplyr filter
+#' @importFrom dplyr group_by
+#' @importFrom dplyr left_join
+#' @importFrom dplyr mutate
 #' @importFrom dplyr mutate_if
+#' @importFrom dplyr n
+#' @importFrom dplyr select
+#' @importFrom dplyr summarise
+#' @importFrom dplyr ungroup
+#' @importFrom editR make_infobox
+#' @importFrom editR selection_server
+#' @importFrom editR view_document
 #' @importFrom purrr map
 #' @importFrom purrr map_dbl
-#' @importFrom dplyr left_join
-#' @importFrom dplyr bind_cols
-#' @importFrom shinybusy show_modal_spinner
-#' @importFrom utils zip
-#' @importFrom shinybusy remove_modal_spinner
-#' @importFrom exams exams2blackboard
+#' @importFrom purrr map_int
+#' @importFrom rhandsontable hot_col
+#' @importFrom rhandsontable hot_cols
+#' @importFrom rhandsontable hot_context_menu
+#' @importFrom rhandsontable hot_to_r
+#' @importFrom rhandsontable renderRHandsontable
+#' @importFrom rhandsontable rhandsontable
+#' @importFrom shiny actionButton
+#' @importFrom shiny column
+#' @importFrom shiny dateInput
+#' @importFrom shiny fluidRow
+#' @importFrom shiny h3
+#' @importFrom shiny icon
+#' @importFrom shiny isolate
+#' @importFrom shiny moduleServer
+#' @importFrom shiny NS
+#' @importFrom shiny numericInput
+#' @importFrom shiny observe
+#' @importFrom shiny observeEvent
+#' @importFrom shiny reactive
+#' @importFrom shiny reactiveValues
+#' @importFrom shiny renderUI
+#' @importFrom shiny req
+#' @importFrom shiny selectInput
+#' @importFrom shinyAce aceEditor
+#' @importFrom shinyalert shinyalert
+#' @importFrom shinydashboard valueBox
+#' @importFrom shinyWidgets multiInput
+#' @importFrom shinyWidgets radioGroupButtons
+#' @importFrom shinyWidgets switchInput
+#' @importFrom stats na.omit
+#' @importFrom stats runif
+#' @importFrom stringr str_detect
+#' @importFrom stringr str_remove_all
+#' @importFrom stringr str_replace
+#' @importFrom stringr str_replace_all
+#' @importFrom tibble rowid_to_column
+#' @importFrom tibble tibble
+#' @importFrom tidyr nest
+#' @importFrom tidyr replace_na
+#' @importFrom tidyr unnest
 #' @export
 
 
@@ -752,34 +775,31 @@ edit_test_server <- function(
       
       
       
-      
-      
-      
-      
-      
-      
-      
       # Edit questions #########################################################
+      
+      output$slcteditquestlang <- shiny::renderUI({
+        languages <- base::strsplit(modrval$test_parameters$test_languages[1], ";")
+        shinyWidgets::radioGroupButtons(
+          inputId = ns("slcteditlanguage"),
+          label = "Language",
+          choices = languages,
+          selected = languages[1],
+          status = "primary", size = "sm",
+          checkIcon = base::list(yes = shiny::icon("check"))
+        )
+      })
       
       edit_list <- shiny::reactive({
         shiny::req(!base::is.null(modrval$test_parameters))
-        test_questions <- course_data()$documents |>
-          dplyr::filter(
-            file %in% base::unique(modrval$test_parameters$question)
-          )
-        testquest <- test_questions$file
-        base::names(testquest) <- test_questions$file
-        testquest
+        shiny::req(!base::is.null(input$slcteditlanguage))
+        shiny::req(base::dir.exists(modrval$test_folder))
+        questions <- base::list.files(base::paste0(
+          modrval$test_folder, "/1_questions"
+        ))
+        questions[stringr::str_detect(questions, input$slcteditlanguage)]
       })
       
       question_to_edit <- editR::selection_server("slctquestion2edit", edit_list)
-      
-      
-      
-      ########################################################################
-      ####   NEED TO ADD THE SELECTION OF OTHER LANGUAGES QUESTIONS      #####
-      ########################################################################
-      
       
       output$edittestquestion <- shiny::renderUI({
         shiny::req(!base::is.null(question_to_edit()))
@@ -814,11 +834,7 @@ edit_test_server <- function(
           shiny::req(!base::is.null(edited_question))
           base::writeLines(
             edited_question,
-            base::paste0(
-              modrval$test_folder,
-              "/1_questions/",
-              selected_question
-            ),
+            base::paste0(modrval$test_folder, "/1_questions/", selected_question),
             useBytes = TRUE
           )
           versions_to_change <- modrval$test_parameters |>
@@ -853,24 +869,20 @@ edit_test_server <- function(
       
       # Check and publish ######################################################
       
-      output$textemplate_selection <- shiny::renderUI({
-        templates <- base::list.files(course_paths()$subfolders$tex)
-        templates <- c("", base::unique(stringr::str_remove_all(
-          templates, "_questions.tex$|_solutions.tex$"
-        )))
-        shiny::selectInput(
-          ns("slcttextemplate"), "Select a PDF template:",
-          choices = templates, selected = "", multiple = FALSE
+      output$selectlanguage <- shiny::renderUI({
+        shiny::isolate({
+          test_parameters <- modrval$test_parameters
+        })
+        languages <- base::strsplit(test_parameters$test_languages[1], ";")
+        shinyWidgets::radioGroupButtons(
+          inputId = ns("slctlanguage"),
+          label = "Language",
+          choices = languages,
+          selected = languages[1],
+          status = "primary", size = "sm",
+          checkIcon = base::list(yes = shiny::icon("check"))
         )
       })
-      
-      
-      
-      ##########################################################################
-      ####   NEED TO ADD THE SELECTION OF OTHER LANGUAGES here             #####
-      ##########################################################################
-      
-      
       
       output$selectsection <- shiny::renderUI({
         shiny::isolate({
@@ -985,6 +997,8 @@ edit_test_server <- function(
         
       })
       
+      # Display
+      
       output$displayversion <- shiny::renderUI({
         shiny::req(!base::is.null(input$slctversion))
         version_to_view <- course_data()$documents |>
@@ -992,6 +1006,7 @@ edit_test_server <- function(
             dplyr::select(modrval$test_parameters, file = question, version),
             by = "file"
           ) |>
+          dplyr::filter(stringr::str_detect(file, input$slctlanguage)) |>
           dplyr::filter(version == input$slctversion) |>
           dplyr::mutate(filepath = base::paste0(
             modrval$test_folder,
@@ -1006,47 +1021,102 @@ edit_test_server <- function(
       })
       
       
+      # Export
       
-      ##########################################################################
-      ####   MAKE SURE ONLY ONE LANGUAGE IS CREATED AT A TIME              #####
-      ##########################################################################
-      
+      output$textemplate_selection <- shiny::renderUI({
+        templates <- base::list.files(course_paths()$subfolders$tex)
+        templates <- c("", base::unique(stringr::str_remove_all(
+          templates, "_questions.tex$|_solutions.tex$"
+        )))
+        shiny::selectInput(
+          ns("slcttextemplate"), "Select a PDF template:",
+          choices = templates, selected = "", multiple = FALSE
+        )
+      })
       
       shiny::observeEvent(input$export_to_pdf, {
-        if (input$slcttextemplate == ""){
-          shinyalert::shinyalert(
-            title = "Please select a template.",
-            text = "You need to select a template to export a test as a PDF.",
-            type = "error", closeOnEsc = FALSE, closeOnClickOutside = TRUE
-          )
-        } else {
-          testR::export_test_to_pdf(
-            modrval$test_parameters,
-            modrval$propositions,
-            modrval$translations,
-            input$slcttextemplate
-          )
-          shinyalert::shinyalert(
-            title = "PDF generated!",
-            text = "You can now retrieve the file in the e_output directory of the test folder.",
-            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
-          )
+        
+        languages <- base::strsplit(test_parameters$test_languages[1], ";")
+        for (l in languages){
+          test_parameters <- modrval$test_parameters |>
+            dplyr::mutate(version = stringr::str_replace_all(
+              version,
+              "_...Rmd",
+              base::paste0("_", l, ".Rmd")
+            ))
+          
+          
+          
+          
+          
+          
+          
+          if (input$slcttextemplate == ""){
+            shinyalert::shinyalert(
+              title = "Please select a template.",
+              text = "You need to select a template to export a test as a PDF.",
+              type = "error", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+            )
+          } else {
+            testR::export_test_to_pdf(
+              modrval$test_parameters,
+              modrval$propositions,
+              modrval$translations,
+              input$slcttextemplate
+            )
+            shinyalert::shinyalert(
+              title = "PDF generated!",
+              text = "You can now retrieve the .pdf files in the exam folder.",
+              type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+            )
+          }
+          
+          
+          
+          
+          
         }
+        
+        
       })
       
       
       shiny::observeEvent(input$export_to_blackboard, {
-        testR::export_test_to_blackboard(
-          modrval$test_parameters,
-          modrval$propositions,
-          modrval$translations
-        )
+        languages <- base::strsplit(test_parameters$test_languages[1], ";")
+        for (l in languages){
+          test_parameters <- modrval$test_parameters |>
+            dplyr::mutate(version = stringr::str_replace_all(
+              version,
+              "_...Rmd",
+              base::paste0("_", l, ".Rmd")
+            ))
+          testR::export_test_to_blackboard(
+            test_parameters,
+            modrval$propositions,
+            modrval$translations,
+            modrval$test_folder
+          )
+        }
         shinyalert::shinyalert(
-          title = "Export generated for Blackboard!",
-          text = "You can now retrieve the file in the e_output directory of the test folder.",
+          title = "Exports generated for Blackboard!",
+          text = "You can now retrieve the .zip file in the exam folder.",
           type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
         )
       })
+      
+      # Open folder
+      
+      shiny::observeEvent(input$openexamfolder, {
+        exam_folder <- base::paste0(modrval$test_folder, "/5_examination")
+        if (base::dir.exists(exam_folder)){
+          if (.Platform['OS.type'] == "windows"){
+            shell.exec(exam_folder)
+          } else {
+            system2("open", exam_folder)
+          }
+        }
+      })
+      
       
     }
   )

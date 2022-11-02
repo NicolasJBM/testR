@@ -32,7 +32,7 @@ record_version <- function(record_version, test, version, exercise){
   
   if (record_version){
     feedback_path <- base::paste0(
-      "../d_feedbacks/", version, ".csv"
+      "../4_solutions/", version, ".csv"
     )
     exercise <- exercise |>
       dplyr::mutate(
