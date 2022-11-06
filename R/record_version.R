@@ -13,7 +13,7 @@
 #' @export
 
 
-record_version <- function(record_version, test, version, exercise){
+record_version <- function(record_solution, test, version, exercise){
   
   number <- NULL
   letter <- NULL
@@ -30,7 +30,7 @@ record_version <- function(record_version, test, version, exercise){
   correct <- NULL
   weight <- NULL
   
-  if (record_version){
+  if (record_solution){
     feedback_path <- base::paste0(
       "../4_solutions/", version, ".csv"
     )

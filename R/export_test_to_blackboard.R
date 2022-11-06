@@ -34,7 +34,7 @@ export_test_to_blackboard <- function(
   testname <- test_parameters$test[1]
   docdir <- base::paste0(exam_folder, "/2_versions")
   tmpdir <- base::paste0(exam_folder, "/3_temporary")
-  outdir <- base::paste0(exam_folder, "/4_solutions")
+  outdir <- base::paste0(exam_folder, "/5_examination")
   
   base::unlink(tmpdir, recursive = TRUE, force = TRUE, expand = TRUE)
   base::dir.create(tmpdir)
@@ -47,18 +47,20 @@ export_test_to_blackboard <- function(
       points = base::max(points), version = c(version), .groups = "drop"
     )
   
-  record_version <- TRUE
-  as_latex <- FALSE
-  record_version <<- record_version
-  as_latex <<- as_latex
+  record_solution <<- TRUE
+  as_latex <<- FALSE
   test_parameters <<- test_parameters
   propositions <<- propositions
   translations <<- translations
   
+  filename <- base::paste0(
+    "blackboard_", stringr::str_extract(test_parameters$version[1], "^..")
+  )
+  
   exams::exams2blackboard(
     file = question_list$version,
     n = 1,
-    name = "blackboard",
+    name = filename,
     dir = outdir,
     edir = docdir,
     tdir = tmpdir,
@@ -70,10 +72,11 @@ export_test_to_blackboard <- function(
     zip = TRUE
   )
   
-  record_version <<- NULL
+  record_solution <<- NULL
   as_latex <<- NULL
   test_parameters <<- NULL
   propositions <<- NULL
+  translations <<- NULL
   
   shinybusy::remove_modal_spinner()
 }

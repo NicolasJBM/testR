@@ -1090,6 +1090,11 @@ edit_test_server <- function(
       
       # Publish ################################################################
       
+      
+      
+      
+      
+      
       output$textemplate_selection <- shiny::renderUI({
         templates <- base::list.files(course_paths()$subfolders$tex)
         templates <- c("", base::unique(stringr::str_remove_all(
@@ -1114,12 +1119,6 @@ edit_test_server <- function(
               base::paste0("_", l, ".Rmd")
             ))
           
-          
-          
-          
-          
-          
-          
           if (input$slcttextemplate == ""){
             shinyalert::shinyalert(
               title = "Please select a template.",
@@ -1140,27 +1139,19 @@ edit_test_server <- function(
             )
           }
           
-          
-          
-          
-          
         }
-        
         
       })
       
       
       shiny::observeEvent(input$export_to_blackboard, {
+        test_parameters <- modrval$test_parameters
         languages <- stringr::str_split(
           test_parameters$test_languages[1], ";", simplify = TRUE
         )
         for (l in languages){
-          test_parameters <- modrval$test_parameters |>
-            dplyr::mutate(version = stringr::str_replace_all(
-              version,
-              "_...Rmd",
-              base::paste0("_", l, ".Rmd")
-            ))
+          test_parameters <- test_parameters |>
+            dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
           testR::export_test_to_blackboard(
             test_parameters,
             modrval$propositions,

@@ -5,14 +5,14 @@
 #' @param versionid Character. Version identifier.
 #' @param test_parameters Tibble. Parameters of all the versions of all the questions included in a test.
 #' @param as_latex Logical. Whether the output is a PDF and therefore should be formatted first as Latex.
-#' @param record_version Logical. Whether the propositions associated to the question should be recorded in the folder "d_feedback".
+#' @param record_solution Logical. Whether the propositions associated to the question should be recorded in the folder "d_feedback".
 #' @return Set all the parameters for the question.
 #' @importFrom dplyr filter
 #' @importFrom stringr str_remove
 #' @export
 
 
-set_question_parameters <- function(versionid, test_parameters = NA, as_latex = FALSE, record_version = FALSE){
+set_question_parameters <- function(versionid, test_parameters = NA, as_latex = FALSE, record_solution = FALSE){
   
   if (base::length(test_parameters) == 1){
     test_parameters <- tibble::tibble(
@@ -73,7 +73,7 @@ set_question_parameters <- function(versionid, test_parameters = NA, as_latex = 
     altnbr = altnbr,
     show_version = show_version,
     show_points = show_points,
-    record_version = record_version,
+    record_solution = record_solution,
     euros = euros,
     dollars = dollars,
     pounds = pounds,
