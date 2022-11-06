@@ -15,7 +15,7 @@ edit_test_server(id, filtered, course_data, tree, test, course_paths)
 
 \item{tree}{Reactive. Selected tree.}
 
-\item{test}{Reactive.. Selected test.}
+\item{test}{Reactive. Selected test.}
 
 \item{course_paths}{Reactive. Function containing a list of paths to the different folders and databases on local disk.}
 }

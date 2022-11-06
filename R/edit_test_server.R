@@ -6,7 +6,7 @@
 #' @param filtered Reactive. List of pre-selected documents.
 #' @param course_data Reactive. Function containing all the course data loaded with the course.
 #' @param tree Reactive. Selected tree.
-#' @param test Reactive.. Selected test.
+#' @param test Reactive. Selected test.
 #' @param course_paths Reactive. Function containing a list of paths to the different folders and databases on local disk.
 #' @return Save the test parameters in the relevant test sub-folder in the folder "5_tests".
 #' @importFrom dplyr arrange
@@ -94,7 +94,6 @@ edit_test_server <- function(
       program <- NULL
       program_level <- NULL
       group <- NULL
-      test <- NULL
       test_format <- NULL
       test_unit <- NULL
       test_assessment <- NULL
@@ -144,35 +143,33 @@ edit_test_server <- function(
       
       shiny::observe({
         shiny::req(!base::is.na(tree()$course[1]))
-        shiny::req(base::nrow(test()) > 1)
-        
         modrval$tree <- tree()$course[1]
-        modrval$selected_test <- test()$test[1]
-        modrval$tests <- base::unique(course_data()$tests$test)
-        
-        shiny::req(modrval$selected_test %in% modrval$tests)
-        
         modrval$test_folder <- base::paste0(
-          course_paths()$subfolders$tests, "/", modrval$selected_test
+          course_paths()$subfolders$tests, "/", test()$test[1]
         )
-        
-        modrval$test_parameters <- test()
-        
+        modrval$parameters_path <- base::paste0(
+          modrval$test_folder, "/test_parameters.RData"
+        )
+        shiny::req(base::file.exists(modrval$parameters_path))
+        base::load(modrval$parameters_path)
+        modrval$test_parameters <- test_parameters
         modrval$questions_included <- stats::na.omit(
-          base::unique(test()$question)
-        ) 
-        
+          base::unique(modrval$test_parameters$question)
+        )
+        tree_tests <- base::list.files(
+          course_paths()$subfolders$tests, full.names = FALSE, recursive = FALSE
+        )
+        tree_tests <- tree_tests[!stringr::str_detect(tree_tests, "^archives$|^default$")]
+        modrval$tree_tests <- tree_tests
         base::load(course_paths()$databases$propositions)
         modrval$propositions <- propositions
-        
         base::load(course_paths()$databases$translations)
         modrval$translations <- translations
-        
         answers <- base::list.files(base::paste0(
           modrval$test_folder, "/7_answers"
         ))
-        check_answers <- base::length(base::unlist(answers))
-        modrval$test_administered <- check_answers > 0
+        check_answers <- base::any(stringr::str_detect(answers, ".csv$"))
+        modrval$test_administered <- check_answers > 1
       })
       
       
@@ -217,8 +214,10 @@ edit_test_server <- function(
               ),
               shiny::selectInput(
                 ns("def_test_languages"), "Languages",
-                choices = "US",
-                selected = modrval$test_parameters$test_languages[1],
+                choices = course_data()$languages$langiso,
+                selected = stringr::str_split(
+                  modrval$test_parameters$test_languages[1], ";", simplify = TRUE
+                ),
                 multiple = TRUE,
                 width = "100%"
               )
@@ -227,7 +226,7 @@ edit_test_server <- function(
               6,
               shiny::dateInput(
                 ns("def_test_date"), "Date",
-                value = modrval$test_parameters$test_date[1],
+                value = NULL,
                 width = "100%"
               ),
               shiny::numericInput(
@@ -282,10 +281,7 @@ edit_test_server <- function(
           )
         
         modrval$test_parameters <- test_parameters
-        path_param <- base::paste0(
-          modrval$test_folder, "/test_parameters.RData"
-        )
-        base::save(test_parameters, file = path_param)
+        base::save(test_parameters, file = modrval$parameters_path)
         shinyalert::shinyalert(
           "Test information updated!",
           base::paste0('The test ', input$slcttest, ' has been updated.'),
@@ -298,8 +294,8 @@ edit_test_server <- function(
       # Select questions #######################################################
       
       output$selectoldtests <- shiny::renderUI({
-        shiny::req(base::length(test()$test) > 0)
-        existing_tests <- base::setdiff(modrval$tests, test()$test[1])
+        shiny::req(base::length(modrval$tree_tests) > 1)
+        existing_tests <- base::setdiff(modrval$tree_tests, test()$test[1])
         shinyWidgets::multiInput(
           inputId = ns("slctpriortests"),
           label = "Select prior tests to identify untested questions",
@@ -427,7 +423,9 @@ edit_test_server <- function(
           
           test_parameters <- modrval$test_parameters
           test_information <- test_parameters[1,1:12]
-          languages <- base::strsplit(test_information$test_languages[1], ";")
+          languages <- stringr::str_split(
+            test_information$test_languages[1], ";", simplify = TRUE
+          )
           
           remove_questions <- base::setdiff(
             base::unique(test_parameters$question),
@@ -445,33 +443,38 @@ edit_test_server <- function(
           test_parameters <- test_parameters |>
             dplyr::filter(question %in% keep_questions)
           
+          available_blocs <- base::setdiff(
+            base::toupper(letters), base::unique(test_parameters$bloc)
+          )
+          
           add <- tibble::tibble(
             question = add_questions,
             section = "Z",
-            bloc = base::toupper(
-              letters[base::seq_len(base::length(add_questions))]
-            ),
+            bloc = available_blocs[1:base::length(add_questions)],
             altnbr = 5,
             points = 0,
             partial_credits = 0,
-            penalty = 0
+            penalty = 0,
+            version = stringr::str_extract(add_questions, "(?<=_)(.*)(?=.Rmd)")
           ) |>
-            dplyr::mutate(version = base::paste0(section,bloc,1,1,".Rmd")) |>
             dplyr::mutate(
-              seed = base::ceiling(
-                stats::runif(base::length(add_questions))* 10000
-              )
+              version = base::paste0(version, section, bloc, 1, 1, ".Rmd"),
+              seed = base::ceiling(stats::runif(base::length(add_questions)) * 10000)
             )
           
           add <- dplyr::bind_cols(test_information, add)
           
-          test_parameters <- dplyr::bind_rows(test_parameters, add)
+          test_parameters <- dplyr::bind_rows(test_parameters, add) |>
+            stats::na.omit()
           
-          base::save(test_parameters, file = base::paste0(
-            modrval$test_folder, "/test_parameters.RData"
+          # Manage files
+          questinfold <- base::list.files(base::paste0(
+            modrval$test_folder, "/1_questions/"
           ))
+          slctedquest <- base::unique(test_parameters$question)
+          rmvquest <- base::setdiff(questinfold, slctedquest)
           
-          for (q in remove_questions){
+          for (q in rmvquest){
             for (l in languages){
               file <- base::paste0(
                 modrval$test_folder, "/1_questions/",
@@ -481,7 +484,7 @@ edit_test_server <- function(
             }
           }
           
-          for (q in add_questions){
+          for (q in slctedquest){
             for (l in languages){
               file <- stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
               origin <- base::paste0(
@@ -492,25 +495,41 @@ edit_test_server <- function(
                   course_paths()$subfolders$translated, "/", file
                 )
               }
-              if (base::file.exists(origin)){
+              destination <- base::paste0(
+                modrval$test_folder, "/1_questions/", file
+              )
+              if (base::file.exists(origin) & !base::file.exists(destination)){
                 base::file.copy(
                   from = origin,
-                  to = base::paste0(
-                    modrval$test_folder, "/1_questions/", file
-                  ),
-                  overwrite = FALSE
+                  to = destination
                 )
               }
             }
           }
           
+          if (base::nrow(test_parameters) == 0){
+            test_parameters <- test_information |>
+              dplyr::mutate(
+                question = base::as.character(NA),
+                section = base::as.character(NA),
+                bloc = base::as.character(NA),
+                altnbr = base::as.integer(NA),
+                points = base::as.integer(NA),
+                partial_credits = base::as.logical(NA),
+                penalty = base::as.logical(NA),
+                version = base::as.character(NA),
+                seed = base::as.integer(NA)
+              )
+          }
+          
           modrval$test_parameters <- test_parameters
+          base::save(test_parameters, file = modrval$parameters_path)
           
           shinyalert::shinyalert(
             title = "Selection of questions updated!",
             text = "Unselected questions have been removed and additional questions added to your test parameters.",
             type = "success", closeOnEsc = FALSE, closeOnClickOutside = FALSE,
-            showCancelButton = TRUE, showConfirmButton = FALSE
+            showCancelButton = FALSE, showConfirmButton = TRUE
           )
         }
       })
@@ -520,9 +539,10 @@ edit_test_server <- function(
       # Organize questions #####################################################
       
       output$question_organization <- rhandsontable::renderRHandsontable({
-        shiny::req(!base::is.null(modrval$test_parameters))
-        shiny::req(base::nrow(modrval$test_parameters) > 0)
-        modrval$test_parameters |>
+        input$update_question_organization
+        shiny::req(base::file.exists(modrval$parameters_path))
+        base::load(modrval$parameters_path)
+        test_parameters |>
           dplyr::left_join(dplyr::select(
             course_data()$documents, question = file, language, title, type
           ), by = "question") |>
@@ -565,7 +585,9 @@ edit_test_server <- function(
           
           test_parameters <- modrval$test_parameters
           test_information <- test_parameters[1,1:12]
-          languages <- base::strsplit(test_information$test_languages[1], ";")
+          languages <- stringr::str_split(
+            test_information$test_languages[1], ";", simplify = TRUE
+          )
           
           initial_versions <- test_parameters |>
             dplyr::select(question, version, seed) |>
@@ -613,10 +635,7 @@ edit_test_server <- function(
           
           test_parameters <- updatequest
           
-          base::save(test_parameters, file = base::paste0(
-            modrval$test_folder,
-            "/test_parameters.RData"
-          ))
+          base::save(test_parameters, file = modrval$parameters_path)
           
           for (i in base::seq_len(base::nrow(test_parameters))){
             for (l in languages){
@@ -627,9 +646,8 @@ edit_test_server <- function(
               v <- stringr::str_replace(v, "^..", l)
               v <- base::paste0(modrval$test_folder, "/2_versions/", v)
               lines <- base::readLines(q)
-              lines[2] <- base::paste0(
-                'versionid <- "', test_parameters$version[i],'"'
-              )
+              vid <- stringr::str_replace(test_parameters$version[i], "^..", l)
+              lines[2] <- base::paste0('versionid <- "', vid,'"')
               base::writeLines(lines, v, useBytes = TRUE)
             }
           }
@@ -778,7 +796,9 @@ edit_test_server <- function(
       # Edit questions #########################################################
       
       output$slcteditquestlang <- shiny::renderUI({
-        languages <- base::strsplit(modrval$test_parameters$test_languages[1], ";")
+        languages <- stringr::str_split(
+          modrval$test_parameters$test_languages[1], ";", simplify = TRUE
+        )
         shinyWidgets::radioGroupButtons(
           inputId = ns("slcteditlanguage"),
           label = "Language",
@@ -804,8 +824,7 @@ edit_test_server <- function(
       output$edittestquestion <- shiny::renderUI({
         shiny::req(!base::is.null(question_to_edit()))
         filepath <- base::paste0(
-          modrval$test_folder,
-          "/1_questions/", question_to_edit()
+          modrval$test_folder, "/1_questions/", question_to_edit()
         )
         if (base::file.exists(filepath)){
           lines <- base::readLines(filepath)
@@ -830,16 +849,29 @@ edit_test_server <- function(
         } else {
           selected_question <- shiny::isolate({ question_to_edit() })
           edited_question <- shiny::isolate({ input$editedtestquest })
+          selected_language <- shiny::isolate({ input$slcteditlanguage })
           shiny::req(!base::is.null(selected_question))
           shiny::req(!base::is.null(edited_question))
+          shiny::req(!base::is.null(selected_language))
           base::writeLines(
             edited_question,
             base::paste0(modrval$test_folder, "/1_questions/", selected_question),
             useBytes = TRUE
           )
           versions_to_change <- modrval$test_parameters |>
+            dplyr::select(question, version) |>
+            dplyr::mutate(
+              question = stringr::str_replace_all(
+                question, "_...Rmd$", base::paste0("_", selected_language, ".Rmd")
+              ),
+              version = stringr::str_replace_all(version, "^..", selected_language)
+            ) |>
             dplyr::filter(question == question_to_edit()) |>
-            dplyr::select(question_path, version, version_path)
+            dplyr::mutate(
+              question_path = base::paste0(modrval$test_folder, "/1_questions/", question),
+              version_path = base::paste0(modrval$test_folder, "/2_versions/", version)
+            )
+            
           for (i in base::seq_len(base::nrow(versions_to_change))){
             lines <- base::readLines(versions_to_change$question_path[i])
             lines[2] <- base::paste0(
@@ -849,31 +881,39 @@ edit_test_server <- function(
               lines, versions_to_change$version_path[i], useBytes = TRUE
             )
           }
+          
+          
+          
         }
       })
       
       output$viewtestquestion <- shiny::renderUI({
         shiny::req(question_to_edit())
+        shiny::req(!base::is.null(input$slcteditlanguage))
         input$savetestquestion
         document_to_edit <- course_data()$documents |>
+          dplyr::mutate(file = stringr::str_replace_all(
+            file, "_...Rmd$", base::paste0("_", input$slcteditlanguage, ".Rmd")
+          )) |>
           dplyr::filter(file == question_to_edit()) |>
           dplyr::mutate(filepath = base::paste0(
-            modrval$test_folder,
-            "/1_questions/",
-            question_to_edit()
+            modrval$test_folder, "/1_questions/", question_to_edit()
           ))
+        shiny::req(base::nrow(document_to_edit) > 0)
         editR::view_document(document_to_edit, TRUE, course_data, course_paths)
       })
       
       
       
-      # Check and publish ######################################################
+      # Check ##################################################################
       
       output$selectlanguage <- shiny::renderUI({
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
-        languages <- base::strsplit(test_parameters$test_languages[1], ";")
+        languages <- stringr::str_split(
+          test_parameters$test_languages[1], ";", simplify = TRUE
+        )
         shinyWidgets::radioGroupButtons(
           inputId = ns("slctlanguage"),
           label = "Language",
@@ -923,8 +963,17 @@ edit_test_server <- function(
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
+        shiny::req(!base::is.null(input$slctlanguage))
         shiny::req(!base::is.null(input$slctsection))
         shiny::req(!base::is.null(input$slctbloc))
+        test_parameters <- test_parameters |>
+          dplyr::mutate(
+            question = stringr::str_replace_all(
+              question, "_...Rmd$",
+              base::paste0("_", input$slctlanguage, ".Rmd")
+            ),
+            version = stringr::str_replace_all(version, "^..", input$slctlanguage)
+          )
         existing_questions <- test_parameters |>
           dplyr::filter(section == input$slctsection, bloc == input$slctbloc)
         existing_questions <- base::unique(existing_questions$question)
@@ -942,7 +991,16 @@ edit_test_server <- function(
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
+        shiny::req(!base::is.null(input$slctlanguage))
         shiny::req(!base::is.null(input$slctquestion))
+        test_parameters <- test_parameters |>
+          dplyr::mutate(
+            question = stringr::str_replace_all(
+              question, "_...Rmd$",
+              base::paste0("_", input$slctlanguage, ".Rmd")
+            ),
+            version = stringr::str_replace_all(version, "^..", input$slctlanguage)
+          )
         existing_versions <- test_parameters |>
           dplyr::filter(question == input$slctquestion)
         existing_versions <- base::unique(existing_versions$version)
@@ -968,16 +1026,13 @@ edit_test_server <- function(
       
       shiny::observeEvent(input$savenewseed, {
         shiny::req(!base::is.null(input$newseed))
-        
         if (modrval$test_administered){
-          
           shinyalert::shinyalert(
             title = "Changes not allowed",
             text = "You cannot change a seed when the test has been administered.",
             type = "error", closeOnEsc = FALSE, closeOnClickOutside = FALSE,
             showCancelButton = TRUE, showConfirmButton = FALSE
           )
-          
         } else {
           test_parameters <- modrval$test_parameters |>
             dplyr::mutate(
@@ -986,15 +1041,9 @@ edit_test_server <- function(
                 TRUE ~ seed
               )
             )
-          
-          base::save(test_parameters, file = base::paste0(
-            modrval$test_folder,
-            "/test_parameters.RData"
-          ))
-          
+          base::save(test_parameters, file = modrval$parameters_path)
           modrval$test_parameters <- test_parameters
         }
-        
       })
       
       # Display
@@ -1006,22 +1055,40 @@ edit_test_server <- function(
             dplyr::select(modrval$test_parameters, file = question, version),
             by = "file"
           ) |>
-          dplyr::filter(stringr::str_detect(file, input$slctlanguage)) |>
+          dplyr::mutate(
+            version = stringr::str_replace_all(version, "^..", input$slctlanguage)
+          ) |>
           dplyr::filter(version == input$slctversion) |>
           dplyr::mutate(filepath = base::paste0(
-            modrval$test_folder,
-            "/2_versions/",
-            input$slctversion
+            modrval$test_folder, "/2_versions/", input$slctversion
           ))
+        new_test_parameters <- modrval$test_parameters |>
+          dplyr::mutate(
+            version = stringr::str_replace_all(version, "^..", input$slctlanguage)
+          )
+        shiny::req(base::nrow(version_to_view) == 1)
         editR::view_document(
           version_to_view, TRUE,
           course_data, course_paths,
-          modrval$test_parameters
+          new_test_parameters
         )
       })
       
       
-      # Export
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      # Publish ################################################################
       
       output$textemplate_selection <- shiny::renderUI({
         templates <- base::list.files(course_paths()$subfolders$tex)
@@ -1036,7 +1103,9 @@ edit_test_server <- function(
       
       shiny::observeEvent(input$export_to_pdf, {
         
-        languages <- base::strsplit(test_parameters$test_languages[1], ";")
+        languages <- stringr::str_split(
+          test_parameters$test_languages[1], ";", simplify = TRUE
+        )
         for (l in languages){
           test_parameters <- modrval$test_parameters |>
             dplyr::mutate(version = stringr::str_replace_all(
@@ -1082,7 +1151,9 @@ edit_test_server <- function(
       
       
       shiny::observeEvent(input$export_to_blackboard, {
-        languages <- base::strsplit(test_parameters$test_languages[1], ";")
+        languages <- stringr::str_split(
+          test_parameters$test_languages[1], ";", simplify = TRUE
+        )
         for (l in languages){
           test_parameters <- modrval$test_parameters |>
             dplyr::mutate(version = stringr::str_replace_all(

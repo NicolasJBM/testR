@@ -46,11 +46,25 @@ edit_test_ui <- function(id){
       shiny::tabPanel(
         title = shiny::tagList(shiny::icon("shuffle"),"Organization"),
         shiny::uiOutput(ns("test_statistics")),
-        shiny::actionButton(
-          ns("save_question_organization"), "Save questions",
-          icon = shiny::icon("floppy-disk"),
-          style = "background-color:#006633;color:#FFF;width:100%;
-        margin-top:10px;margin-bottom:10px;"
+        shiny::fluidRow(
+          shiny::column(
+            6,
+            shiny::actionButton(
+              ns("update_question_organization"), "Update questions",
+              icon = shiny::icon("rotate"),
+              style = "background-color:#003366;color:#FFF;width:100%;
+                      margin-top:10px;margin-bottom:10px;"
+            )
+          ),
+          shiny::column(
+            6,
+            shiny::actionButton(
+              ns("save_question_organization"), "Save questions",
+              icon = shiny::icon("floppy-disk"),
+              style = "background-color:#006633;color:#FFF;width:100%;
+                      margin-top:10px;margin-bottom:10px;"
+            )
+          )
         ),
         rhandsontable::rHandsontableOutput(ns("question_organization"))
       ),
