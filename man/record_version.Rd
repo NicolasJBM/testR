@@ -4,10 +4,10 @@
 \alias{record_version}
 \title{Save feedback}
 \usage{
-record_version(record_version, test, version, exercise)
+record_version(record_solution, test, version, exercise)
 }
 \arguments{
-\item{record_version}{Logical. Whether an individual report will be sent later to each student.}
+\item{record_solution}{Logical. Whether an individual report will be sent later to each student.}
 
 \item{test}{Character. Name of the test.}
 

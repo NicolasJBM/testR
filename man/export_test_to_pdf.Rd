@@ -4,14 +4,30 @@
 \alias{export_test_to_pdf}
 \title{Export test to PDF files}
 \usage{
-export_test_to_pdf(test_parameters, feedbacks, template)
+export_test_to_pdf(
+  test_parameters,
+  propositions,
+  translations,
+  exam_folder,
+  tex_folder,
+  template,
+  language
+)
 }
 \arguments{
 \item{test_parameters}{Tibble. List of questions with associated parameters.}
 
-\item{feedbacks}{Tibble. List of propositions, criteria, and associated feedback.}
+\item{propositions}{Tibble. List of propositions, criteria, and associated feedback.}
+
+\item{translations}{Tibble. Table containing translations of items and explanations.}
+
+\item{exam_folder}{Character. Path to the exam folder.}
+
+\item{tex_folder}{Character. Path to the tex folder.}
 
 \item{template}{Character. Name of the template to be used to format the test.}
+
+\item{language}{Character. ISO2 code of the printed language.}
 }
 \value{
 Path to the zip files containing the test(s)

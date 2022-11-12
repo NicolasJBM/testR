@@ -126,45 +126,25 @@ edit_test_ui <- function(id){
               style = "background-color:#660000;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"
             ),
-            shiny::actionButton(
-              ns("export_to_html"), "HTML", icon = shiny::icon("globe"),
-              style = "background-color:#660033;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
+            shiny::tags$hr(),
+            shinyWidgets::prettyCheckboxGroup(
+              inputId = ns("slctlms"),
+              label = "Select Learning Management Systems:", 
+              choices = c("Moodle", "Canvas", "Blackboard","OpenOlat","ARSnova","Partificy","Ilias","TCexam","Testvision","QUI12","QTI21"),
+              icon = icon("check-to-slot"), 
+              status = "success",
+              outline = TRUE, 
+              animation = "tada"
             ),
             shiny::actionButton(
-              ns("export_to_moodle"), "Moodle", icon = shiny::icon("download"),
-              style = "background-color:#330066;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
-            ),
-            shiny::actionButton(
-              ns("export_to_canvas"), "Canvas", icon = shiny::icon("download"),
-              style = "background-color:#000099;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
-            ),
-            shiny::actionButton(
-              ns("export_to_blackboard"), "Blackboard",
-              icon = shiny::icon("download"),
-              style = "background-color:#003366;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
-            ),
-            shiny::actionButton(
-              ns("export_to_arsnova"), "ARS Nova", icon = shiny::icon("download"),
-              style = "background-color:#006633;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
-            ),
-            shiny::actionButton(
-              ns("export_to_qti12"), "QTI 1.2", icon = shiny::icon("download"),
-              style = "background-color:#006600;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
-            ),
-            shiny::actionButton(
-              ns("export_to_qti21"), "QTI 2.1", icon = shiny::icon("download"),
-              style = "background-color:#336600;color:#FFF;width:100%;
+              ns("export_to_lms"), "LMS",
+              icon = shiny::icon("graduation-cap"),
+              style = "background-color:#000066;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"
             ),
             shiny::tags$hr(),
             shiny::actionButton(
-              ns("openexamfolder"), "Open folder", icon = shiny::icon("folder"),
+              ns("openexamfolder"), "Open folder", icon = shiny::icon("folder-open"),
               style = "background-color:#222222;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"
             )

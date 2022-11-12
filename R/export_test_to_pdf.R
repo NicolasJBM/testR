@@ -3,10 +3,13 @@
 #' @author Nicolas Mangin
 #' @description Function creating tests to be printed out.
 #' @param test_parameters Tibble. List of questions with associated parameters.
-#' @param feedbacks Tibble. List of propositions, criteria, and associated feedback.
+#' @param propositions Tibble. List of propositions, criteria, and associated feedback.
+#' @param translations Tibble. Table containing translations of items and explanations.
+#' @param exam_folder Character. Path to the exam folder.
+#' @param tex_folder Character. Path to the tex folder.
 #' @param template Character. Name of the template to be used to format the test.
+#' @param language Character. ISO2 code of the printed language.
 #' @return Path to the zip files containing the test(s)
-#' @importFrom shinybusy show_modal_spinner
 #' @importFrom dplyr select
 #' @importFrom dplyr arrange
 #' @importFrom dplyr group_by
@@ -19,31 +22,32 @@
 
 
 
-export_test_to_pdf <- function(test_parameters, feedbacks, template){
-  
-  shinybusy::show_modal_spinner(
-    spin = "orbit",
-    text = "Please wait while the test is exported to PDF..."
-  )
+export_test_to_pdf <- function(
+  test_parameters, propositions, translations,
+  exam_folder, tex_folder, template, language
+){
   
   section <- NULL
   bloc <- NULL
   altnbr <- NULL
   
-  initwd <- base::getwd()
   testname <- test_parameters$test[1]
-  testwd <- base::paste0(initwd, "/5_tests/", testname)
-  docdir <- base::paste0(testwd, "/b_versions")
-  tmpdir <- base::paste0(testwd, "/c_tmp")
-  outdir <- base::paste0(testwd, "/e_output")
+  docdir <- base::paste0(exam_folder, "/2_versions")
+  tmpdir <- base::paste0(exam_folder, "/3_temporary")
+  outdir <- base::paste0(exam_folder, "/5_examination")
   direxam <- base::paste0(tmpdir,"/exam1")
   
+  base::unlink(
+    base::paste0(tmpdir, "/*"),
+    recursive = TRUE, force = TRUE, expand = TRUE
+  )
+  
   questions_template <- base::paste0(
-    initwd, "/1_preparation/templates/test/", template, "_questions.tex"
+    tex_folder, "/", template, "_questions_", language, ".tex"
   )
   
   solutions_template <- base::paste0(
-    initwd, "/1_preparation/templates/test/", template, "_solutions.tex"
+    tex_folder, "/", template, "_solutions_", language, ".tex"
   )
   
   mcq <- test_parameters |> dplyr::filter(altnbr > 0) |>
@@ -62,7 +66,8 @@ export_test_to_pdf <- function(test_parameters, feedbacks, template){
   
   utils::write.csv(
     base::t(test_permutations),
-    file = base::paste0(outdir, "/permutations.csv")
+    file = base::paste0(outdir, "/permutations.csv"),
+    row.names = FALSE
   )
   
   tests <- base::list()
@@ -71,23 +76,25 @@ export_test_to_pdf <- function(test_parameters, feedbacks, template){
     question_list <- mcq[test_permutations[i,]]
     question_list <- dplyr::bind_rows(question_list)$data
     question_list <- c(question_list, open$data)
-    tests[[base::paste0("version_", i)]] <- question_list
+    tests[[base::paste0(language, "_", i)]] <- question_list
   }
   
   test_date <- test_parameters$test_date[[1]]
-  record_version <- TRUE
-  as_latex <- TRUE
-  record_version <<- record_version
+  record_solution <- TRUE
+  as_latex <- FALSE
+  record_solution <<- record_solution
   as_latex <<- as_latex
   test_parameters <<- test_parameters
-  feedbacks <<- feedbacks
+  propositions <<- propositions
+  translations <<- translations
   
   for (test in base::names(tests)){
     
     test_version <- stringr::str_replace_all(test, "_", " ")
     
-    base::Sys.sleep(5)
+    base::Sys.sleep(3)
     if (base::dir.exists(direxam)) fs::dir_delete(direxam)
+    base::Sys.sleep(3)
     
     exams::exams2pdf(
       file = tests[[test]],
@@ -104,8 +111,9 @@ export_test_to_pdf <- function(test_parameters, feedbacks, template){
       base64 = c("png", "jpg")
     )
     
-    base::Sys.sleep(5)
+    base::Sys.sleep(3)
     if (base::dir.exists(direxam)) fs::dir_delete(direxam)
+    base::Sys.sleep(3)
     
     exams::exams2pdf(
       file = tests[[test]],
@@ -121,12 +129,14 @@ export_test_to_pdf <- function(test_parameters, feedbacks, template){
       verbose = FALSE,
       base64 = c("png", "jpg")
     )
+    
+    base::Sys.sleep(3)
+    if (base::dir.exists(direxam)) fs::dir_delete(direxam)
+    base::Sys.sleep(3)
   }
   
-  record_version <<- NULL
+  record_solution <<- NULL
   as_latex <<- NULL
   test_parameters <<- NULL
-  feedbacks <<- NULL
-  
-  shinybusy::remove_modal_spinner()
+  propositions <<- NULL
 }

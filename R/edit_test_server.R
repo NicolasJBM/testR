@@ -1016,6 +1016,7 @@ edit_test_server <- function(
       
       output$editseed <- shiny::renderUI({
         shiny::req(!base::is.null(input$slctversion))
+        shiny::req(stringr::str_detect(modrval$test_parameters$version[1], input$slctlanguage))
         seed <- modrval$test_parameters |>
           dplyr::filter(version == input$slctversion)
         seed <- seed$seed
@@ -1076,29 +1077,12 @@ edit_test_server <- function(
       
       
       
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       # Publish ################################################################
-      
-      
-      
-      
-      
       
       output$textemplate_selection <- shiny::renderUI({
         templates <- base::list.files(course_paths()$subfolders$tex)
         templates <- c("", base::unique(stringr::str_remove_all(
-          templates, "_questions.tex$|_solutions.tex$"
+          templates, "_questions_...tex$|_solutions_...tex$"
         )))
         shiny::selectInput(
           ns("slcttextemplate"), "Select a PDF template:",
@@ -1107,61 +1091,78 @@ edit_test_server <- function(
       })
       
       shiny::observeEvent(input$export_to_pdf, {
-        
-        languages <- stringr::str_split(
-          test_parameters$test_languages[1], ";", simplify = TRUE
-        )
-        for (l in languages){
-          test_parameters <- modrval$test_parameters |>
-            dplyr::mutate(version = stringr::str_replace_all(
-              version,
-              "_...Rmd",
-              base::paste0("_", l, ".Rmd")
-            ))
-          
-          if (input$slcttextemplate == ""){
-            shinyalert::shinyalert(
-              title = "Please select a template.",
-              text = "You need to select a template to export a test as a PDF.",
-              type = "error", closeOnEsc = FALSE, closeOnClickOutside = TRUE
-            )
-          } else {
-            testR::export_test_to_pdf(
-              modrval$test_parameters,
-              modrval$propositions,
-              modrval$translations,
-              input$slcttextemplate
-            )
-            shinyalert::shinyalert(
-              title = "PDF generated!",
-              text = "You can now retrieve the .pdf files in the exam folder.",
-              type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
-            )
-          }
-          
-        }
-        
-      })
-      
-      
-      shiny::observeEvent(input$export_to_blackboard, {
+        base::print("Generate PDF files.")
         test_parameters <- modrval$test_parameters
         languages <- stringr::str_split(
           test_parameters$test_languages[1], ";", simplify = TRUE
         )
+        
+        if (input$slcttextemplate == ""){
+          shinybusy::remove_modal_spinner()
+          shinyalert::shinyalert(
+            title = "Please select a template.",
+            text = "You need to select a template to export a test as a PDF.",
+            type = "error", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+          )
+        } else {
+          shinybusy::show_modal_spinner(
+            spin = "orbit",
+            text = "Please wait while the test is exported to PDF..."
+          )
+          for (l in languages){
+            test_parameters <- test_parameters |>
+              dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
+            testR::export_test_to_pdf(
+              test_parameters,
+              modrval$propositions,
+              modrval$translations,
+              modrval$test_folder,
+              course_paths()$subfolders$tex,
+              input$slcttextemplate,
+              l
+            )
+          }
+          shinybusy::remove_modal_spinner()
+          shinyalert::shinyalert(
+            title = "PDF generated!",
+            text = "You can now retrieve the .pdf files in the exam folder.",
+            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+          )
+        }
+      })
+      
+      
+      shiny::observeEvent(input$export_to_lms, {
+        test_parameters <- modrval$test_parameters
+        languages <- stringr::str_split(
+          test_parameters$test_languages[1], ";", simplify = TRUE
+        )
+        shiny::req(base::length(languages)>0)
+        shiny::req(base::length(input$slctlms)>0)
+        pubnbr <- base::length(languages)*base::length(input$slctlms)
+        pgr <- 1/pubnbr
+        shinybusy::show_modal_progress_circle(
+          value = pgr, text = "Publication progress"
+        )
         for (l in languages){
           test_parameters <- test_parameters |>
             dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
-          testR::export_test_to_blackboard(
-            test_parameters,
-            modrval$propositions,
-            modrval$translations,
-            modrval$test_folder
-          )
+          for (lms in input$slctlms){
+            pgr <- pgr+1/pubnbr
+            testR::export_test_to_lms(
+              test_parameters,
+              modrval$propositions,
+              modrval$translations,
+              modrval$test_folder,
+              lms
+            )
+            shinybusy::update_modal_progress(pgr)
+          }
         }
+        shinybusy::remove_modal_spinner()
         shinyalert::shinyalert(
-          title = "Exports generated for Blackboard!",
-          text = "You can now retrieve the .zip file in the exam folder.",
+          title = "Exports generated!",
+          text = "You can now retrieve the .zip files for the selected LMS in the examination folder.",
           type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
         )
       })

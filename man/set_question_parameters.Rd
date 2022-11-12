@@ -8,7 +8,7 @@ set_question_parameters(
   versionid,
   test_parameters = NA,
   as_latex = FALSE,
-  record_version = FALSE
+  record_solution = FALSE
 )
 }
 \arguments{
@@ -18,7 +18,7 @@ set_question_parameters(
 
 \item{as_latex}{Logical. Whether the output is a PDF and therefore should be formatted first as Latex.}
 
-\item{record_version}{Logical. Whether the propositions associated to the question should be recorded in the folder "d_feedback".}
+\item{record_solution}{Logical. Whether the propositions associated to the question should be recorded in the folder "d_feedback".}
 }
 \value{
 Set all the parameters for the question.
