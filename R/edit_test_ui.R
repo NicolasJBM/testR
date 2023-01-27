@@ -28,8 +28,8 @@ edit_test_ui <- function(id){
             shiny::uiOutput(ns("selectoldtests")),
             shiny::actionButton(
               ns("applyselection"),
-              "Apply selection", icon = shiny::icon("check"),
-              style = "color:#FFF;background-color:#660033;
+              "Save selection", icon = shiny::icon("check"),
+              style = "color:#FFF;background-color:#006600;
             width:100%;margin-top:10px;margin-bottom:25px;"
             ),
             shiny::uiOutput(ns("selectuntested")),
@@ -45,7 +45,6 @@ edit_test_ui <- function(id){
       ),
       shiny::tabPanel(
         title = shiny::tagList(shiny::icon("shuffle"),"Organization"),
-        shiny::uiOutput(ns("test_statistics")),
         shiny::fluidRow(
           shiny::column(
             6,
@@ -67,6 +66,52 @@ edit_test_ui <- function(id){
           )
         ),
         rhandsontable::rHandsontableOutput(ns("question_organization"))
+      ),
+      shiny::tabPanel(
+        title = shiny::tagList(shiny::icon("scale-balanced"),"Composition"),
+        shiny::uiOutput(ns("test_statistics")),
+        shiny::fluidRow(
+          shiny::column(
+            4,
+            shiny::selectInput(
+              ns("slctval"), "Value:",
+              choices = c("count","points"), selected = "points",
+              width = "100%"
+            ),
+            shiny::plotOutput(ns("scatterplot"), height = "700px")
+          ),
+          shiny::column(
+            8,
+            shiny::fluidRow(
+              shiny::column(
+                4,
+                shiny::selectInput(
+                  ns("slctdim1"), "Fist dimension:",
+                  choices = "section", selected = "section",
+                  width = "100%"
+                )
+              ),
+              shiny::column(
+                4,
+                shiny::numericInput(
+                  ns("slctdepth"), "Section depth:",
+                  min = 2, max = 9, value = 2,
+                  width = "100%"
+                )
+              ),
+              shiny::column(
+                4,
+                shiny::selectInput(
+                  ns("slctdim2"), "Second dimension:",
+                  choices = "type", selected = "type",
+                  width = "100%"
+                )
+              )
+            ),
+            shiny::plotOutput(ns("barchart"), height = "700px")
+          )
+        ),
+        shiny::plotOutput(ns("heatmap"), height = "700px")
       ),
       shiny::tabPanel(
         title = shiny::tagList(shiny::icon("pen-to-square"),"Edition"),

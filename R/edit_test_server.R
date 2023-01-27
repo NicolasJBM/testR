@@ -68,6 +68,7 @@
 #' @importFrom tidyr nest
 #' @importFrom tidyr replace_na
 #' @importFrom tidyr unnest
+#' @importFrom classR trees_find_higher_level
 #' @export
 
 
@@ -122,6 +123,18 @@ edit_test_server <- function(
       folder <- NULL
       test_name <- NULL
       title <- NULL
+      category <- NULL
+      category1 <- NULL
+      category2 <- NULL
+      catvalue <- NULL
+      discrimination <- NULL
+      document_parameters <- NULL
+      filtlevel <- NULL
+      guess <- NULL
+      position <- NULL
+      text <- NULL
+      value <- NULL
+      numeric_position <- NULL
       
       modrval <- shiny::reactiveValues()
       
@@ -239,17 +252,25 @@ edit_test_server <- function(
                 value = modrval$test_parameters$test_points[1],
                 width = "100%"
               ),
-              shinyWidgets::switchInput(
-                ns("def_show_version"), "Show version name",
-                value = modrval$test_parameters$show_version[1],
-                onStatus = "success", offStatus = "danger",
-                labelWidth = "150px", handleWidth = "50px"
-              ),
-              shinyWidgets::switchInput(
-                ns("def_show_points"), "Show question points",
-                value = modrval$test_parameters$show_points[1],
-                onStatus = "success", offStatus = "danger",
-                labelWidth = "150px", handleWidth = "50px"
+              shiny::fluidRow(
+                shiny::column(
+                  5,
+                  shinyWidgets::switchInput(
+                    ns("def_show_version"), "Show version name",
+                    value = modrval$test_parameters$show_version[1],
+                    onStatus = "success", offStatus = "danger",
+                    labelWidth = "150px", handleWidth = "50px"
+                  )
+                ),
+                shiny::column(
+                  7,
+                  shinyWidgets::switchInput(
+                    ns("def_show_points"), "Show question points",
+                    value = modrval$test_parameters$show_points[1],
+                    onStatus = "success", offStatus = "danger",
+                    labelWidth = "150px", handleWidth = "50px"
+                  )
+                )
               ),
               shiny::actionButton(
                 ns("save_test_def"), "Save", icon = shiny::icon("floppy-disk"),
@@ -540,6 +561,7 @@ edit_test_server <- function(
       
       output$question_organization <- rhandsontable::renderRHandsontable({
         input$update_question_organization
+        shiny::req(!base::is.na(tree()$course[1]))
         shiny::req(base::file.exists(modrval$parameters_path))
         base::load(modrval$parameters_path)
         test_parameters |>
@@ -788,6 +810,125 @@ edit_test_server <- function(
               width = 12
             )
           )
+        )
+      })
+      
+      
+      
+      # Test composition #######################################################
+      
+      selected_positions <- shiny::reactive({
+        selected_positions <- filtered() |>
+          dplyr::select(file) |>
+          dplyr::left_join(dplyr::select(tree()$tbltree, file, position), by = "file") |>
+          dplyr::mutate(position = purrr::map_chr(position, classR::trees_find_higher_level, y = input$slctdepth)) |>
+          dplyr::mutate(numeric_position = stringr::str_remove_all(position, "\\."))
+        
+        tree()$tbltree |>
+          dplyr::select(position, section = text) |>
+          dplyr::mutate(numeric_position = stringr::str_remove_all(position, "\\.")) |>
+          dplyr::mutate(filtlevel = base::substr(numeric_position, input$slctdepth+1,input$slctdepth+1)) |>
+          dplyr::filter(
+            numeric_position %in% selected_positions$numeric_position,
+            filtlevel == 0
+          ) |>
+          dplyr::select(-filtlevel)
+      })
+      
+      composition <- shiny::reactive({
+        shiny::req(!base::is.na(tree()$course[1]))
+        base::load(course_paths()$databases$document_parameters)
+        modrval$test_parameters |>
+          dplyr::group_by(section, bloc) |>
+          dplyr::sample_n(1) |>
+          dplyr::ungroup() |>
+          dplyr::select(question, points) |>
+          base::unique() |>
+          dplyr::mutate(count = 1) |>
+          dplyr::left_join(
+            dplyr::select(tree()$tbltree, question = file, position, type, dplyr::starts_with("tag_")), 
+            by = "question"
+          ) |>
+          dplyr::left_join(
+            dplyr::select(document_parameters, question = file, success, discrimination, guess), 
+            by = "question"
+          ) |>
+          dplyr::mutate(position = purrr::map_chr(position, classR::trees_find_higher_level, y = input$slctdepth)) |>
+          dplyr::left_join(selected_positions(), by = "position") |>
+          dplyr::mutate(
+            category1 = base::get(input$slctdim1),
+            category2 = base::get(input$slctdim2),
+            value = base::get(input$slctval)
+          )
+      })
+      
+      categorical_values <- shiny::reactive({
+        shiny::req(!base::is.na(tree()$course[1]))
+        base::load(course_paths()$databases$doctypes)
+        base::load(course_paths()$databases$tags)
+        positions <- selected_positions() |>
+          dplyr::arrange(position) |>
+          dplyr::mutate(
+            category = "section",
+            catvalue = section
+          )
+        tags <- tags |>
+          dplyr::arrange(order)
+        dplyr::bind_rows(
+          dplyr::select(positions, category, catvalue),
+          tibble::tibble(
+            category = "type",
+            catvalue = c("Statements","Alternatives","Computation","Essay","Problem"),
+            order = c(1:5)
+          ),
+          dplyr::select(tags, category = tag, catvalue = value)
+        )
+      })
+      
+      shiny::observe({
+        shiny::updateSelectInput(
+          session,
+          "slctdim1",
+          choices = base::unique(c("section", categorical_values()$category))
+        )
+        shiny::updateSelectInput(
+          session,
+          "slctdim2",
+          choices = base::unique(c("type", categorical_values()$category))
+        )
+      })
+      
+      categorical_values1 <- shiny::reactive({
+        dplyr::rename(categorical_values(), category1 = category) |>
+          dplyr::filter(category1 == input$slctdim1) |>
+          dplyr::select(category1 = catvalue) |>
+          base::unique()
+      })
+      
+      categorical_values2 <- shiny::reactive({
+        dplyr::rename(categorical_values(), category2 = category) |>
+          dplyr::filter(category2 == input$slctdim2) |>
+          dplyr::select(category2 = catvalue) |>
+          base::unique()
+      })
+      
+      output$scatterplot <- shiny::renderPlot({
+        chartR::draw_composition_scatterplot(composition())
+      })
+      
+      output$barchart <- shiny::renderPlot({
+        chartR::draw_composition_barchart(
+          composition(), 
+          input$slctdim1,
+          categorical_values1()
+        )
+      })
+      
+      output$heatmap <- shiny::renderPlot({
+        chartR::draw_composition_heatmap(
+          composition(),
+          input$slctdim1, input$slctdim2,
+          categorical_values1(), categorical_values2()
         )
       })
       
