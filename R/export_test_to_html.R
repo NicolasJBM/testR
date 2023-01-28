@@ -1,12 +1,12 @@
-#' @name export_test_to_pdf
-#' @title Export test to PDF files
+#' @name export_test_to_html
+#' @title Export test to HTML files
 #' @author Nicolas Mangin
 #' @description Function creating tests to be printed out.
 #' @param test_parameters Tibble. List of questions with associated parameters.
 #' @param propositions Tibble. List of propositions, criteria, and associated feedback.
 #' @param translations Tibble. Table containing translations of items and explanations.
 #' @param exam_folder Character. Path to the exam folder.
-#' @param template_folder Character. Path to the tex folder.
+#' @param template_folder Character. Path to the html folder.
 #' @param template Character. Name of the template to be used to format the test.
 #' @param language Character. ISO2 code of the printed language.
 #' @return Path to the zip files containing the test(s)
@@ -22,7 +22,7 @@
 
 
 
-export_test_to_pdf <- function(
+export_test_to_html <- function(
   test_parameters, propositions, translations,
   exam_folder, template_folder, template, language
 ){
@@ -43,11 +43,11 @@ export_test_to_pdf <- function(
   )
   
   questions_template <- base::paste0(
-    template_folder, "/", template, "_questions_", language, ".tex"
+    template_folder, "/", template, "_questions_", language, ".html"
   )
   
   solutions_template <- base::paste0(
-    template_folder, "/", template, "_solutions_", language, ".tex"
+    template_folder, "/", template, "_solutions_", language, ".html"
   )
   
   mcq <- test_parameters |> dplyr::filter(altnbr > 0) |>
@@ -81,7 +81,7 @@ export_test_to_pdf <- function(
   
   test_date <- test_parameters$test_date[[1]]
   record_solution <- TRUE
-  docformat <- "latex"
+  docformat <- "html"
   record_solution <<- record_solution
   docformat <<- docformat
   test_parameters <<- test_parameters
@@ -96,9 +96,11 @@ export_test_to_pdf <- function(
     if (base::dir.exists(direxam)) fs::dir_delete(direxam)
     base::Sys.sleep(3)
     
-    exams::exams2pdf(
+    exams::exams2html(
       file = tests[[test]],
       n = 1,
+      question = TRUE,
+      solution = FALSE,
       name = base::paste0("questions_", test),
       template = questions_template,
       header = base::list(ID = test_version, Date = test_date),
@@ -115,9 +117,11 @@ export_test_to_pdf <- function(
     if (base::dir.exists(direxam)) fs::dir_delete(direxam)
     base::Sys.sleep(3)
     
-    exams::exams2pdf(
+    exams::exams2html(
       file = tests[[test]],
       n = 1,
+      question = TRUE,
+      solution = TRUE,
       name = base::paste0("solutions_", test),
       template = solutions_template,
       header = base::list(ID = test_version, Date = test_date),

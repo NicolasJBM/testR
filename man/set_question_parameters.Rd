@@ -7,7 +7,7 @@
 set_question_parameters(
   versionid,
   test_parameters = NA,
-  as_latex = FALSE,
+  docformat = "pandoc",
   record_solution = FALSE
 )
 }
@@ -16,7 +16,7 @@ set_question_parameters(
 
 \item{test_parameters}{Tibble. Parameters of all the versions of all the questions included in a test.}
 
-\item{as_latex}{Logical. Whether the output is a PDF and therefore should be formatted first as Latex.}
+\item{docformat}{Character Whether the output is "latex", "html", or "pandoc".}
 
 \item{record_solution}{Logical. Whether the propositions associated to the question should be recorded in the folder "d_feedback".}
 }

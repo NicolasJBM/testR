@@ -137,7 +137,7 @@ edit_test_ui <- function(id){
         title = shiny::tagList(shiny::icon("print"),"Publication"),
         shiny::fluidRow(
           shiny::column(
-            4,
+            3,
             shiny::uiOutput(ns("selectlanguage")),
             shiny::uiOutput(ns("selectsection")),
             shiny::uiOutput(ns("selectbloc")),
@@ -164,12 +164,17 @@ edit_test_ui <- function(id){
             shiny::uiOutput(ns("displayversion"))
           ),
           shiny::column(
-            2,
-            shiny::uiOutput(ns("textemplate_selection")),
+            3,
+            shinyWidgets::radioGroupButtons(
+              inputId = ns("slctfileformat"),label = "File format:", 
+              choices = c("PDF","HTML","DOCX"),
+              status = "danger", justified = TRUE, size = "sm",
+              checkIcon = base::list(yes = shiny::icon("check"))
+            ),
+            shiny::uiOutput(ns("filetemplate_selection")),
             shiny::actionButton(
-              ns("export_to_pdf"), "PDF", icon = shiny::icon("file-pdf"),
-              style = "background-color:#660000;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
+              ns("export_to_file"), "FILE", icon = shiny::icon("file-check"),
+              style = "background-color:#660000;color:#FFF;width:100%;margin-top:10px;margin-bottom:10px;"
             ),
             shiny::tags$hr(),
             shinyWidgets::prettyCheckboxGroup(

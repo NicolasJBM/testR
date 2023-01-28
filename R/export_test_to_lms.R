@@ -46,9 +46,9 @@ export_test_to_lms <- function(
     )
   
   record_solution <- TRUE
-  as_latex <- FALSE
+  docformat <- "html"
   record_solution <<- record_solution
-  as_latex <<- as_latex
+  docformat <<- docformat
   test_parameters <<- test_parameters
   propositions <<- propositions
   translations <<- translations
@@ -244,7 +244,7 @@ export_test_to_lms <- function(
   }
   
   record_solution <<- NULL
-  as_latex <<- NULL
+  docformat <<- NULL
   test_parameters <<- NULL
   propositions <<- NULL
   translations <<- NULL

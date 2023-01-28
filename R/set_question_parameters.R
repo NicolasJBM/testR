@@ -4,7 +4,7 @@
 #' @description Function retrieving the parameters defined in "test_parameters" for the version of a question identified by "versionid".
 #' @param versionid Character. Version identifier.
 #' @param test_parameters Tibble. Parameters of all the versions of all the questions included in a test.
-#' @param as_latex Logical. Whether the output is a PDF and therefore should be formatted first as Latex.
+#' @param docformat Character Whether the output is "latex", "html", or "pandoc".
 #' @param record_solution Logical. Whether the propositions associated to the question should be recorded in the folder "d_feedback".
 #' @return Set all the parameters for the question.
 #' @importFrom dplyr filter
@@ -12,7 +12,7 @@
 #' @export
 
 
-set_question_parameters <- function(versionid, test_parameters = NA, as_latex = FALSE, record_solution = FALSE){
+set_question_parameters <- function(versionid, test_parameters = NA, docformat = "pandoc", record_solution = FALSE){
   
   if (base::length(test_parameters) == 1){
     test_parameters <- tibble::tibble(
@@ -49,21 +49,26 @@ set_question_parameters <- function(versionid, test_parameters = NA, as_latex = 
     } else show_points <- base::paste0("(", points, " point)")
   } else show_points <- ""
   
-  if (as_latex) {
+  if (docformat == "latex") {
     
     euros <- "\\texteuro"
     dollars <- "\\textdollar"
     pounds <- "\\pounds"
-    yens <- "\\textyen"
     percents <- "\\%"
     
-  } else {
+  } else if (docformat == "html") {
     
     euros <- "&euro;"
     dollars <- "$"
     pounds <- "&pound;"
-    yens <- "&yen;"
     percents <- "%"
+    
+  } else {
+    
+    euros <- "\u20ac"
+    dollars <- "\u0024"
+    pounds <- "\u00A3"
+    percents <- "u\0025"
     
   }
   
@@ -77,7 +82,6 @@ set_question_parameters <- function(versionid, test_parameters = NA, as_latex = 
     euros = euros,
     dollars = dollars,
     pounds = pounds,
-    yens = yens,
     percents = percents
   )
   
