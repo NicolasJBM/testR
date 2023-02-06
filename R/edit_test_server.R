@@ -1277,6 +1277,9 @@ edit_test_server <- function(
               dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
             
             
+            
+            
+            
             if (input$slctfileformat == "PDF"){
               testR::export_test_to_pdf(
                 test_parameters,
@@ -1308,6 +1311,11 @@ edit_test_server <- function(
                 l
               )
             }
+            
+            
+            
+            
+            
           }
           shinybusy::remove_modal_spinner()
           shinyalert::shinyalert(

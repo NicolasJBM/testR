@@ -173,7 +173,7 @@ edit_test_ui <- function(id){
             ),
             shiny::uiOutput(ns("filetemplate_selection")),
             shiny::actionButton(
-              ns("export_to_file"), "FILE", icon = shiny::icon("file-check"),
+              ns("export_to_file"), "FILE", icon = shiny::icon("print"),
               style = "background-color:#660000;color:#FFF;width:100%;margin-top:10px;margin-bottom:10px;"
             ),
             shiny::tags$hr(),
