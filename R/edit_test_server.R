@@ -1264,21 +1264,17 @@ edit_test_server <- function(
           shinybusy::remove_modal_spinner()
           shinyalert::shinyalert(
             title = "Please select a template.",
-            text = "You need to select a template to export a test as a PDF.",
+            text = "You need to select a template to export a test as a document.",
             type = "error", closeOnEsc = FALSE, closeOnClickOutside = TRUE
           )
         } else {
           shinybusy::show_modal_spinner(
             spin = "orbit",
-            text = "Please wait while the test is exported to PDF..."
+            text = "Please wait while the test is exported to a document..."
           )
           for (l in languages){
             test_parameters <- test_parameters |>
               dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
-            
-            
-            
-            
             
             if (input$slctfileformat == "PDF"){
               testR::export_test_to_pdf(
@@ -1312,22 +1308,14 @@ edit_test_server <- function(
               )
             }
             
-            
-            
-            
-            
           }
           shinybusy::remove_modal_spinner()
           shinyalert::shinyalert(
-            title = "PDF generated!",
-            text = "You can now retrieve the .pdf files in the exam folder.",
+            title = "Test generated!",
+            text = "You can now retrieve the files in the exam folder.",
             type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
           )
         }
-        
-        
-        
-        
         
       })
       
