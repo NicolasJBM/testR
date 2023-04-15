@@ -200,6 +200,23 @@ edit_test_ui <- function(id){
             )
           )
         )
+      ),
+      shiny::tabPanel(
+        title = shiny::tagList(shiny::icon("users"),"Students"),
+        shiny::fluidRow(
+          shiny::column(
+            2,
+            shiny::actionButton(
+              ns("savestudentlist"),
+              "Save list", icon = shiny::icon("floppy-disk"),
+              style = "color:#FFF;background-color:#006600;width:100%;margin-top:0px;margin-bottom:0px;"
+            )
+          ),
+          shiny::column(
+            10,
+            rhandsontable::rHandsontableOutput(ns("studentlist"))
+          )
+        )
       )
     )
   )

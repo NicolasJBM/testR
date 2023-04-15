@@ -1369,6 +1369,30 @@ edit_test_server <- function(
       })
       
       
+      
+      # Publish ################################################################
+      
+      output$studentlist <- rhandsontable::renderRHandsontable({
+        base::paste0(modrval$test_folder, "/6_students/student_list.csv") |>
+          utils::read.csv(colClasses = "character") |>
+          rhandsontable::rhandsontable(
+            width = "80%", rowHeaders = NULL, stretchH = "all", useTypes = FALSE
+          ) |>
+          rhandsontable::hot_context_menu(allowRowEdit = TRUE, allowColEdit = TRUE)
+      })
+      
+      shiny::observeEvent(input$savestudentlist, {
+        rhandsontable::hot_to_r(input$studentlist) |>
+          utils::write.csv(
+            base::paste0(modrval$test_folder, "/6_students/student_list.csv"),
+            row.names = FALSE
+          )
+        shinyalert::shinyalert(
+          "Student list saved!",
+          type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+        )
+      })
+      
     }
   )
 }
