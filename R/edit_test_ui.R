@@ -194,6 +194,13 @@ edit_test_ui <- function(id){
             ),
             shiny::tags$hr(),
             shiny::actionButton(
+              ns("savemdfiles"), "Save MD files",
+              icon = shiny::icon("floppy-disk"),
+              style = "background-color:#006600;color:#FFF;width:100%;
+            margin-top:10px;margin-bottom:10px;"
+            ),
+            shiny::tags$hr(),
+            shiny::actionButton(
               ns("openexamfolder"), "Open folder", icon = shiny::icon("folder-open"),
               style = "background-color:#222222;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"

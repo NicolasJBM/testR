@@ -1355,6 +1355,28 @@ edit_test_server <- function(
         )
       })
       
+      # Save MD files
+      
+      shiny::observeEvent(input$savemdfiles, {
+        versions_folder <- base::paste0(modrval$test_folder, "/2_versions")
+        exam_folder <- base::paste0(modrval$test_folder, "/5_examination")
+        md_folder <- base::paste0(exam_folder, "/mdfiles")
+        if (base::dir.exists(exam_folder) & base::dir.exists(versions_folder)){
+          if (!base::dir.exists(md_folder)) base::dir.create(md_folder)
+          test_parameters <<- modrval$test_parameters
+          propositions <<- modrval$propositions
+          translations <<- modrval$translations
+          record_solution <<- FALSE
+          docformat <<- "html"
+          mdfiles <- base::list.files(versions_folder, full.names = TRUE)
+          for (file in mdfiles) {
+            newfile <- stringr::str_replace(file, "Rmd$", "md")
+            newfile <- stringr::str_replace(file, versions_folder, md_folder)
+            knitr::knit(file, newfile)
+          }
+        }
+      })
+      
       # Open folder
       
       shiny::observeEvent(input$openexamfolder, {
