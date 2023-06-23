@@ -17,6 +17,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports:
     shiny,
+    knitr,
+    readr,
     dplyr,
     exams,
     fs,

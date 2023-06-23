@@ -17,6 +17,12 @@ edit_test_ui <- function(id){
     shinydashboard::tabBox(
       side = "left", width = "100%",
       shiny::tabPanel(
+        title = shiny::span(
+          shiny::icon("chalkboard"), "Resources",
+          title = "Resources to help you test students.",
+        )
+      ),
+      shiny::tabPanel(
         title = shiny::tagList(shiny::icon("id-card"),"Definition"),
         shiny::uiOutput(ns("test_definition"))
       ),
@@ -37,7 +43,10 @@ edit_test_ui <- function(id){
           ),
           shiny::column(
             8,
-            shiny::column(12, editR::selection_ui(ns("slctquest2disp"))),
+            shiny::column(
+              12,
+              editR::selection_ui(ns("slctquest2disp"), "Question:")
+            ),
             shiny::uiOutput(ns("viewquestionstats")),
             shiny::uiOutput(ns("viewquestion"))
           )
@@ -165,6 +174,13 @@ edit_test_ui <- function(id){
           ),
           shiny::column(
             3,
+            shiny::actionButton(
+              ns("genmdfiles"), "Save MD files",
+              icon = shiny::icon("floppy-disk"),
+              style = "background-color:#006600;color:#FFF;width:100%;
+            margin-top:10px;margin-bottom:10px;"
+            ),
+            shiny::tags$hr(),
             shinyWidgets::radioGroupButtons(
               inputId = ns("slctfileformat"),label = "File format:", 
               choices = c("PDF","HTML","DOCX"),
@@ -190,13 +206,6 @@ edit_test_ui <- function(id){
               ns("export_to_lms"), "LMS",
               icon = shiny::icon("graduation-cap"),
               style = "background-color:#000066;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
-            ),
-            shiny::tags$hr(),
-            shiny::actionButton(
-              ns("savemdfiles"), "Save MD files",
-              icon = shiny::icon("floppy-disk"),
-              style = "background-color:#006600;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"
             ),
             shiny::tags$hr(),

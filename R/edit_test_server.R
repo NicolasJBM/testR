@@ -400,7 +400,10 @@ edit_test_server <- function(
           dplyr::filter(file %in% questorder) |>
           dplyr::arrange(base::match(file, questorder))
         to_display <-sampled_questions$file
-        base::names(to_display) <- sampled_questions$title
+        base::names(to_display) <- base::paste0(
+          sampled_questions$code, " - ",
+          sampled_questions$title
+        )
         to_display
       })
       
@@ -423,7 +426,7 @@ edit_test_server <- function(
         to_view$filepath <- base::paste0(
           course_paths()$subfolders$original, "/", to_view$file
         )
-        editR::view_document(to_view, TRUE, course_data, course_paths)
+        editR::display_question(to_view, course_paths)
       })
       
       shiny::observeEvent(input$applyselection, {
@@ -1022,9 +1025,6 @@ edit_test_server <- function(
               lines, versions_to_change$version_path[i], useBytes = TRUE
             )
           }
-          
-          
-          
         }
       })
       
@@ -1041,7 +1041,7 @@ edit_test_server <- function(
             modrval$test_folder, "/1_questions/", question_to_edit()
           ))
         shiny::req(base::nrow(document_to_edit) > 0)
-        editR::view_document(document_to_edit, TRUE, course_data, course_paths)
+        editR::display_question(document_to_edit, course_paths)
       })
       
       
@@ -1216,16 +1216,38 @@ edit_test_server <- function(
             version = stringr::str_replace_all(version, "^..", input$slctlanguage)
           )
         shiny::req(base::nrow(version_to_view) == 1)
-        editR::view_document(
-          version_to_view, TRUE,
-          course_data, course_paths,
-          new_test_parameters
-        )
+        editR::display_question(version_to_view, course_paths, new_test_parameters)
       })
       
       
       
+      
+      
+      
+      
+      
+      
       # Publish ################################################################
+      
+      shiny::observeEvent(input$genmdfiles, {
+        versions_folder <- base::paste0(modrval$test_folder, "/2_versions")
+        exam_folder <- base::paste0(modrval$test_folder, "/5_examination")
+        md_folder <- base::paste0(exam_folder, "/mdfiles")
+        if (base::dir.exists(exam_folder) & base::dir.exists(versions_folder)){
+          if (!base::dir.exists(md_folder)) base::dir.create(md_folder)
+          test_parameters <- modrval$test_parameters
+          propositions <- modrval$propositions
+          translations <- modrval$translations
+          record_solution <- FALSE
+          docformat <- "html"
+          mdfiles <- base::list.files(versions_folder, full.names = TRUE)
+          for (file in mdfiles) {
+            newfile <- stringr::str_replace(file, "Rmd$", "md")
+            newfile <- stringr::str_replace(file, versions_folder, md_folder)
+            knitr::knit(file, newfile, envir = base::new.env())
+          }
+        }
+      })
       
       output$filetemplate_selection <- shiny::renderUI({
         shiny::req(!base::is.null(input$slctfileformat))
@@ -1307,7 +1329,6 @@ edit_test_server <- function(
                 l
               )
             }
-            
           }
           shinybusy::remove_modal_spinner()
           shinyalert::shinyalert(
@@ -1355,28 +1376,6 @@ edit_test_server <- function(
         )
       })
       
-      # Save MD files
-      
-      shiny::observeEvent(input$savemdfiles, {
-        versions_folder <- base::paste0(modrval$test_folder, "/2_versions")
-        exam_folder <- base::paste0(modrval$test_folder, "/5_examination")
-        md_folder <- base::paste0(exam_folder, "/mdfiles")
-        if (base::dir.exists(exam_folder) & base::dir.exists(versions_folder)){
-          if (!base::dir.exists(md_folder)) base::dir.create(md_folder)
-          test_parameters <<- modrval$test_parameters
-          propositions <<- modrval$propositions
-          translations <<- modrval$translations
-          record_solution <<- FALSE
-          docformat <<- "html"
-          mdfiles <- base::list.files(versions_folder, full.names = TRUE)
-          for (file in mdfiles) {
-            newfile <- stringr::str_replace(file, "Rmd$", "md")
-            newfile <- stringr::str_replace(file, versions_folder, md_folder)
-            knitr::knit(file, newfile)
-          }
-        }
-      })
-      
       # Open folder
       
       shiny::observeEvent(input$openexamfolder, {
@@ -1392,11 +1391,11 @@ edit_test_server <- function(
       
       
       
-      # Publish ################################################################
+      # Students ###############################################################
       
       output$studentlist <- rhandsontable::renderRHandsontable({
         base::paste0(modrval$test_folder, "/6_students/student_list.csv") |>
-          utils::read.csv(colClasses = "character") |>
+          readr::read_csv(col_types = "ccccc") |>
           rhandsontable::rhandsontable(
             width = "80%", rowHeaders = NULL, stretchH = "all", useTypes = FALSE
           ) |>
