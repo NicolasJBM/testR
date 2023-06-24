@@ -28,7 +28,7 @@ set_question_parameters <- function(versionid, test_parameters = NA, docformat =
   }
   
   version_parameters <- test_parameters |>
-    dplyr::mutate(version = stringr::str_replace_all(version, "^..", substr(versionid, 1,2))) |>
+    #dplyr::mutate(version = stringr::str_replace_all(version, "^..", substr(versionid, 1,2))) |>
     dplyr::filter(version == versionid)
   
   test <- test_parameters$test[1]

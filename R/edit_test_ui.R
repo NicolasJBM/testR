@@ -180,14 +180,14 @@ edit_test_ui <- function(id){
           shiny::column(
             3,
             shiny::tags$h4("Export questions or tests to files"),
-            shinyWidgets::radioGroupButtons(
+            shinyWidgets::checkboxGroupButtons(
               inputId = ns("slctfileformat"),label = "File format:", 
               choices = c(
                 `<i class='fa fa-file-lines'> MD </i>` = "MD",
                 `<i class='fa fa-file-word'> DOCX </i>` = "DOCX",
                 `<i class='fa fa-file-code'> HTML </i>` = "HTML",
                 `<i class='fa fa-file-pdf'> PDF </i>` = "PDF"
-              ),
+              ), selected = "MD",
               status = "primary", justified = TRUE, size = "normal",
               checkIcon = base::list(yes = shiny::icon("check"))
             ),

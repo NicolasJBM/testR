@@ -149,8 +149,7 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       base64 = c("png", "jpg"),
-      zip = TRUE,
-      envir = base::parent.frame()
+      zip = TRUE
     )
     
   } else if (lms == "Partificy"){
@@ -173,8 +172,7 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       base64 = c("png", "jpg"),
-      zip = TRUE,
-      envir = base::new.env()
+      zip = TRUE
     )
     
   } else if (lms == "Ilias"){
@@ -213,8 +211,7 @@ export_test_to_lms <- function(
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
-      zip = TRUE,
-      envir = base::new.env()
+      zip = TRUE
     )
     
   } else if (lms == "Testvision"){
@@ -237,8 +234,7 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       base64 = c("png", "jpg"),
-      zip = TRUE,
-      envir = base::new.env()
+      zip = TRUE
     )
     
   } else if (lms == "QUI12"){
