@@ -399,11 +399,13 @@ edit_test_server <- function(
         sampled_questions <- course_data()$documents |>
           dplyr::filter(file %in% questorder) |>
           dplyr::arrange(base::match(file, questorder))
-        to_display <-sampled_questions$file
-        base::names(to_display) <- base::paste0(
-          sampled_questions$code, " - ",
-          sampled_questions$title
-        )
+        if (base::nrow(sampled_questions) > 0){
+          to_display <- sampled_questions$file
+          base::names(to_display) <- base::paste0(
+            sampled_questions$code, " - ",
+            sampled_questions$title
+          )
+        }  else to_display <- base::character(0)
         to_display
       })
       
@@ -1050,6 +1052,7 @@ edit_test_server <- function(
       
       output$selectlanguage <- shiny::renderUI({
         test()
+        input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
@@ -1068,6 +1071,7 @@ edit_test_server <- function(
       
       output$selectsection <- shiny::renderUI({
         test()
+        input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
@@ -1079,13 +1083,14 @@ edit_test_server <- function(
           label = "Section",
           choices = existing_sections,
           selected = existing_sections[1],
-          status = "primary", size = "sm",
+          status = "info", size = "sm",
           checkIcon = base::list(yes = shiny::icon("check"))
         )
       })
       
       output$selectbloc <- shiny::renderUI({
         test()
+        input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
@@ -1105,6 +1110,7 @@ edit_test_server <- function(
       
       output$selectquestion <- shiny::renderUI({
         test()
+        input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
@@ -1134,6 +1140,7 @@ edit_test_server <- function(
       
       output$selectversion <- shiny::renderUI({
         test()
+        input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
@@ -1162,6 +1169,7 @@ edit_test_server <- function(
       
       output$editseed <- shiny::renderUI({
         test()
+        input$refresh_organization
         shiny::req(!base::is.null(input$slctversion))
         shiny::req(stringr::str_detect(modrval$test_parameters$version[1], input$slctlanguage))
         seed <- modrval$test_parameters |>
@@ -1221,84 +1229,104 @@ edit_test_server <- function(
       
       
       
-      
-      
-      
-      
-      
-      
       # Publish ################################################################
       
-      shiny::observeEvent(input$genmdfiles, {
-        versions_folder <- base::paste0(modrval$test_folder, "/2_versions")
-        exam_folder <- base::paste0(modrval$test_folder, "/5_examination")
-        md_folder <- base::paste0(exam_folder, "/mdfiles")
-        if (base::dir.exists(exam_folder) & base::dir.exists(versions_folder)){
-          if (!base::dir.exists(md_folder)) base::dir.create(md_folder)
-          test_parameters <- modrval$test_parameters
-          propositions <- modrval$propositions
-          translations <- modrval$translations
-          record_solution <- FALSE
-          docformat <- "html"
-          mdfiles <- base::list.files(versions_folder, full.names = TRUE)
-          for (file in mdfiles) {
-            newfile <- stringr::str_replace(file, "Rmd$", "md")
-            newfile <- stringr::str_replace(file, versions_folder, md_folder)
-            knitr::knit(file, newfile, envir = base::new.env())
-          }
-        }
-      })
-      
-      output$filetemplate_selection <- shiny::renderUI({
+      output$slctpdftemplate <- shiny::renderUI({
         shiny::req(!base::is.null(input$slctfileformat))
-        templates <- base::list.files(course_paths()$subfolders$exams)
         if (input$slctfileformat == "PDF"){
+          templates <- base::list.files(course_paths()$subfolders$exams)
           templates <- templates[stringr::str_detect(templates, "tex$")]
-          templates <- c("", base::unique(stringr::str_remove_all(
+          templates <- base::unique(stringr::str_remove_all(
             templates, "_questions_...tex$|_solutions_...tex$"
-          )))
-        } else if (input$slctfileformat == "HTML") {
-          templates <- templates[stringr::str_detect(templates, "html$")]
-          templates <- c("", base::unique(stringr::str_remove_all(
-            templates, "_questions_...html$|_solutions_...html$"
-          )))
-        } else {
-          templates <- templates[stringr::str_detect(templates, "md$")]
-          templates <- c("", base::unique(stringr::str_remove_all(
-            templates, "_questions_...md$|_solutions_...md$"
-          )))
+          ))
+          shinyWidgets::radioGroupButtons(
+            inputId = ns("slctexamtemplate"),label = "Template:", 
+            choices = templates,
+            status = "info", justified = FALSE, size = "sm",
+            checkIcon = base::list(yes = shiny::icon("check"))
+          )
         }
-        shiny::selectInput(
-          ns("slctexamtemplate"), "Template:",
-          choices = templates, selected = "", multiple = FALSE,
-          width = "100%"
-        )
       })
       
       shiny::observeEvent(input$export_to_file, {
-        shiny::req(!base::is.null(input$slctexamtemplate))
-        base::print(base::paste0("Generate ", input$slctfileformat, " files."))
+        shiny::req(!base::is.null(input$slctfileformat))
         test_parameters <- modrval$test_parameters
         languages <- stringr::str_split(
           test_parameters$test_languages[1], ";", simplify = TRUE
         )
-        if (input$slctexamtemplate == ""){
-          shinybusy::remove_modal_spinner()
-          shinyalert::shinyalert(
-            title = "Please select a template.",
-            text = "You need to select a template to export a test as a document.",
-            type = "error", closeOnEsc = FALSE, closeOnClickOutside = TRUE
-          )
-        } else {
+        if (input$slctfileformat == "MD"){
           shinybusy::show_modal_spinner(
             spin = "orbit",
-            text = "Please wait while the test is exported to a document..."
+            text = "Please wait while each dynamic question is converted into a static .md file..."
+          )
+          testR::generate_md_files(
+            modrval$test_parameters,
+            modrval$propositions,
+            modrval$translations,
+            modrval$test_folder
+          )
+          shinybusy::remove_modal_spinner()
+          shinyalert::shinyalert(
+            title = "MD files generated!",
+            text = "You can now retrieve the .md files in the mdfiles folder of the examination folder.",
+            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+          )
+        } else if (input$slctfileformat == "DOCX") {
+          shinybusy::show_modal_spinner(
+            spin = "orbit",
+            text = "Please wait while each dynamic question is converted into a static .docx file..."
+          )
+          testR::generate_docx_files(
+            modrval$test_parameters,
+            modrval$propositions,
+            modrval$translations,
+            modrval$test_folder
+          )
+          shinybusy::remove_modal_spinner()
+          shinyalert::shinyalert(
+            title = "DOCX files generated!",
+            text = "You can now retrieve the word documents in the docxfiles folder of the examination folder.",
+            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+          )
+        } else if (input$slctfileformat == "HTML") {
+          
+          
+          shinybusy::show_modal_spinner(
+            spin = "orbit",
+            text = base::paste0("Please wait while the test is exported to a ", input$slctfileformat, " document...")
           )
           for (l in languages){
-            test_parameters <- test_parameters |>
-              dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
-            
-            if (input$slctfileformat == "PDF"){
+            testR::export_test_to_html(
+              test_parameters,
+              modrval$propositions,
+              modrval$translations,
+              modrval$test_folder,
+              l
+            )
+          }
+          shinybusy::remove_modal_spinner()
+          shinyalert::shinyalert(
+            title = "Test generated!",
+            text = "You can now retrieve the files in the exam folder.",
+            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+          )
+        } else {
+          shiny::req(!base::is.null(input$slctexamtemplate))
+          
+          
+          if (input$slctexamtemplate == ""){
+            shinybusy::remove_modal_spinner()
+            shinyalert::shinyalert(
+              title = "Please select a template.",
+              text = "You need to select a template to export a test as a document.",
+              type = "error", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+            )
+          } else {
+            shinybusy::show_modal_spinner(
+              spin = "orbit",
+              text = base::paste0("Please wait while the test is exported to a ", input$slctfileformat, " document...")
+            )
+            for (l in languages){
               testR::export_test_to_pdf(
                 test_parameters,
                 modrval$propositions,
@@ -1308,38 +1336,16 @@ edit_test_server <- function(
                 input$slctexamtemplate,
                 l
               )
-            } else if (input$slctfileformat == "HTML") {
-              testR::export_test_to_html(
-                test_parameters,
-                modrval$propositions,
-                modrval$translations,
-                modrval$test_folder,
-                course_paths()$subfolders$exams,
-                input$slctexamtemplate,
-                l
-              )
-            } else {
-              testR::export_test_to_docx(
-                test_parameters,
-                modrval$propositions,
-                modrval$translations,
-                modrval$test_folder,
-                course_paths()$subfolders$exams,
-                input$slctexamtemplate,
-                l
-              )
             }
+            shinybusy::remove_modal_spinner()
+            shinyalert::shinyalert(
+              title = "Test generated!",
+              text = "You can now retrieve the files in the exam folder.",
+              type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+            )
           }
-          shinybusy::remove_modal_spinner()
-          shinyalert::shinyalert(
-            title = "Test generated!",
-            text = "You can now retrieve the files in the exam folder.",
-            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
-          )
         }
-        
       })
-      
       
       shiny::observeEvent(input$export_to_lms, {
         test_parameters <- modrval$test_parameters
@@ -1363,7 +1369,7 @@ edit_test_server <- function(
               modrval$propositions,
               modrval$translations,
               modrval$test_folder,
-              lms
+              lms, l
             )
             shinybusy::update_modal_progress(pgr)
           }

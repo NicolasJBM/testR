@@ -7,6 +7,7 @@
 #' @param translations Tibble. Table containing translations of items and explanations.
 #' @param exam_folder Character. Path to the exam folder.
 #' @param lms Character. Name of the learning management system for which the export should be generated.
+#' @param language Character. ISO2 code of the printed language.
 #' @return Path to the zip files containing the test(s)
 #' @importFrom shinybusy show_modal_spinner
 #' @importFrom dplyr select
@@ -20,7 +21,8 @@
 
 
 export_test_to_lms <- function(
-    test_parameters, propositions, translations, exam_folder, lms = 'Moodle'
+    test_parameters, propositions, translations,
+    exam_folder, lms = 'Moodle', language
 ){
   
   section <- NULL
@@ -47,17 +49,10 @@ export_test_to_lms <- function(
   
   record_solution <- TRUE
   docformat <- "html"
-  record_solution <<- record_solution
-  docformat <<- docformat
-  test_parameters <<- test_parameters
-  propositions <<- propositions
-  translations <<- translations
   
-  filename <- base::paste0(
-    lms, "_", stringr::str_extract(test_parameters$version[1], "^..")
-  )
+  filename <- base::paste0(lms, "_", language)
   
-  base::print(base::paste0("Export for ", lms, "."))
+  base::print(base::paste0("Export for ", lms, " in ", language, "."))
   
   if (lms == "Moodle"){
     
@@ -72,7 +67,8 @@ export_test_to_lms <- function(
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   } else if (lms == "Canvas"){
@@ -88,10 +84,17 @@ export_test_to_lms <- function(
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   } else if (lms == "Blackboard"){
+    
+    test_parameters <<- test_parameters
+    propositions <<- propositions
+    translations <<- translations
+    record_solution <<- record_solution
+    docformat <<- docformat
     
     exams::exams2blackboard(
       file = question_list$version,
@@ -122,10 +125,17 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       base64 = c("png", "jpg"),
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   } else if (lms == "ARSnova"){
+    
+    test_parameters <<- test_parameters
+    propositions <<- propositions
+    translations <<- translations
+    record_solution <<- record_solution
+    docformat <<- docformat
     
     exams::exams2arsnova(
       file = question_list$version,
@@ -139,10 +149,17 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       base64 = c("png", "jpg"),
-      zip = TRUE
+      zip = TRUE,
+      envir = base::parent.frame()
     )
     
   } else if (lms == "Partificy"){
+    
+    test_parameters <<- test_parameters
+    propositions <<- propositions
+    translations <<- translations
+    record_solution <<- record_solution
+    docformat <<- docformat
     
     exams::exams2particify(
       file = question_list$version,
@@ -156,7 +173,8 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       base64 = c("png", "jpg"),
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   } else if (lms == "Ilias"){
@@ -172,10 +190,17 @@ export_test_to_lms <- function(
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   } else if (lms == "TCexam"){
+    
+    test_parameters <<- test_parameters
+    propositions <<- propositions
+    translations <<- translations
+    record_solution <<- record_solution
+    docformat <<- docformat
     
     exams::exams2tcexam(
       file = question_list$version,
@@ -188,10 +213,17 @@ export_test_to_lms <- function(
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   } else if (lms == "Testvision"){
+    
+    test_parameters <<- test_parameters
+    propositions <<- propositions
+    translations <<- translations
+    record_solution <<- record_solution
+    docformat <<- docformat
     
     exams::exams2testvision(
       file = question_list$version,
@@ -205,7 +237,8 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       base64 = c("png", "jpg"),
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   } else if (lms == "QUI12"){
@@ -221,7 +254,8 @@ export_test_to_lms <- function(
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   } else if (lms == "QTI21"){
@@ -238,16 +272,11 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       base64 = c("png", "jpg"),
-      zip = TRUE
+      zip = TRUE,
+      envir = base::new.env()
     )
     
   }
-  
-  record_solution <<- NULL
-  docformat <<- NULL
-  test_parameters <<- NULL
-  propositions <<- NULL
-  translations <<- NULL
   
   base::Sys.sleep(3)
   

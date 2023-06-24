@@ -60,7 +60,7 @@ edit_test_ui <- function(id){
             shiny::actionButton(
               ns("update_question_organization"), "Update questions",
               icon = shiny::icon("rotate"),
-              style = "background-color:#003366;color:#FFF;width:100%;
+              style = "background-color:#006699;color:#FFF;width:100%;
                       margin-top:10px;margin-bottom:10px;"
             )
           ),
@@ -147,6 +147,11 @@ edit_test_ui <- function(id){
         shiny::fluidRow(
           shiny::column(
             3,
+            shiny::actionButton(
+              ns("refresh_organization"), "Refresh the organization",
+              icon = shiny::icon("rotate"),
+              style = "background-color:#006699;color:#FFF;width:100%;margin-top:10px;margin-bottom:10px;"
+            ),
             shiny::uiOutput(ns("selectlanguage")),
             shiny::uiOutput(ns("selectsection")),
             shiny::uiOutput(ns("selectbloc")),
@@ -174,44 +179,42 @@ edit_test_ui <- function(id){
           ),
           shiny::column(
             3,
-            shiny::actionButton(
-              ns("genmdfiles"), "Save MD files",
-              icon = shiny::icon("floppy-disk"),
-              style = "background-color:#006600;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
-            ),
-            shiny::tags$hr(),
+            shiny::tags$h4("Export questions or tests to files"),
             shinyWidgets::radioGroupButtons(
               inputId = ns("slctfileformat"),label = "File format:", 
-              choices = c("PDF","HTML","DOCX"),
-              status = "danger", justified = TRUE, size = "sm",
+              choices = c(
+                `<i class='fa fa-file-lines'> MD </i>` = "MD",
+                `<i class='fa fa-file-word'> DOCX </i>` = "DOCX",
+                `<i class='fa fa-file-code'> HTML </i>` = "HTML",
+                `<i class='fa fa-file-pdf'> PDF </i>` = "PDF"
+              ),
+              status = "primary", justified = TRUE, size = "normal",
               checkIcon = base::list(yes = shiny::icon("check"))
             ),
-            shiny::uiOutput(ns("filetemplate_selection")),
+            shiny::uiOutput(ns("slctpdftemplate")),
             shiny::actionButton(
-              ns("export_to_file"), "FILE", icon = shiny::icon("print"),
-              style = "background-color:#660000;color:#FFF;width:100%;margin-top:10px;margin-bottom:10px;"
+              ns("export_to_file"), "Publish to files",
+              icon = shiny::icon("print"),
+              style = "background-color:#000099;color:#FFF;width:100%;margin-top:10px;margin-bottom:10px;"
             ),
             shiny::tags$hr(),
-            shinyWidgets::prettyCheckboxGroup(
+            shiny::tags$h4("Export tests to Learning Management Systems"),
+            shinyWidgets::checkboxGroupButtons(
               inputId = ns("slctlms"),
               label = "Select Learning Management Systems:", 
               choices = c("Moodle", "Canvas", "Blackboard","OpenOlat","ARSnova","Partificy","Ilias","TCexam","Testvision","QUI12","QTI21"),
-              icon = icon("check-to-slot"), 
-              status = "success",
-              outline = TRUE, 
-              animation = "tada"
+              status = "success", justified = FALSE, individual = FALSE, size = "normal",
+              checkIcon = base::list(yes = shiny::icon("check"))
             ),
             shiny::actionButton(
-              ns("export_to_lms"), "LMS",
-              icon = shiny::icon("graduation-cap"),
-              style = "background-color:#000066;color:#FFF;width:100%;
-            margin-top:10px;margin-bottom:10px;"
+              ns("export_to_lms"), "Publish to LMS",
+              icon = shiny::icon("print"),
+              style = "background-color:#006633;color:#FFF;width:100%;margin-top:10px;margin-bottom:10px;"
             ),
             shiny::tags$hr(),
             shiny::actionButton(
               ns("openexamfolder"), "Open folder", icon = shiny::icon("folder-open"),
-              style = "background-color:#222222;color:#FFF;width:100%;
+              style = "background-color:#660000;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"
             )
           )

@@ -16,8 +16,6 @@
 #' @importFrom exams exams2blackboard
 #' @importFrom dplyr summarise
 #' @importFrom utils globalVariables
-#' @importFrom gtools permutations
-#' @importFrom fs dir_delete
 #' @export
 
 
@@ -34,13 +32,19 @@ export_test_to_pdf <- function(
   testname <- test_parameters$test[1]
   docdir <- base::paste0(exam_folder, "/2_versions")
   tmpdir <- base::paste0(exam_folder, "/3_temporary")
-  outdir <- base::paste0(exam_folder, "/5_examination")
+  outdir <- base::paste0(exam_folder, "/5_examination/pdffiles")
   direxam <- base::paste0(tmpdir,"/exam1")
   
   base::unlink(
     base::paste0(tmpdir, "/*"),
     recursive = TRUE, force = TRUE, expand = TRUE
   )
+  base::unlink(
+    base::paste0(outdir, "/*"),
+    recursive = TRUE, force = TRUE, expand = TRUE
+  )
+  base::unlink(direxam, recursive = TRUE, force = FALSE, expand = TRUE)
+  if (!base::dir.exists(outdir)) base::dir.create(outdir)
   
   questions_template <- base::paste0(
     template_folder, "/", template, "_questions_", language, ".tex"
@@ -60,40 +64,38 @@ export_test_to_pdf <- function(
     dplyr::group_by(section, bloc) |>
     tidyr::nest()
   
-  mcq_sections <- base::unique(mcq$section)
-  mcq_sectionnbr <- base::length(mcq_sections)
-  test_permutations <- gtools::permutations(mcq_sectionnbr, mcq_sectionnbr)
-  
-  utils::write.csv(
-    base::t(test_permutations),
-    file = base::paste0(outdir, "/permutations.csv"),
-    row.names = FALSE
-  )
+  nbrsections <- base::length(base::unique(mcq$section))
   
   tests <- base::list()
-  mcq <- base::split(mcq, mcq$section)
-  for (i in base::seq_len(base::nrow(test_permutations))){
-    question_list <- mcq[test_permutations[i,]]
-    question_list <- dplyr::bind_rows(question_list)$data
-    question_list <- c(question_list, open$data)
-    tests[[base::paste0(language, "_", i)]] <- question_list
+  if (nbrsections > 1){
+    test_permutations <- testR::permute_sections(c(1:nbrsections))
+    utils::write.csv(
+      base::t(test_permutations),
+      file = base::paste0(outdir, "/permutations.csv"),
+      row.names = FALSE
+    )
+    mcq <- base::split(mcq, mcq$section)
+    for (i in base::seq_len(base::nrow(test_permutations))){
+      question_list <- mcq[test_permutations[i,]]
+      question_list <- dplyr::bind_rows(question_list)$data
+      question_list <- c(question_list, open$data)
+      tests[[base::paste0(language, "_", i)]] <- question_list
+    }
+  } else {
+    tests[[base::paste0(language, "_0")]] <- c(mcq$data, open$data)
   }
   
   test_date <- test_parameters$test_date[[1]]
   record_solution <- TRUE
   docformat <- "latex"
-  record_solution <<- record_solution
-  docformat <<- docformat
-  test_parameters <<- test_parameters
-  propositions <<- propositions
-  translations <<- translations
   
   for (test in base::names(tests)){
     
     test_version <- stringr::str_replace_all(test, "_", " ")
     
     base::Sys.sleep(3)
-    if (base::dir.exists(direxam)) fs::dir_delete(direxam)
+    if (base::dir.exists(direxam))
+      base::unlink(direxam, recursive = TRUE, force = FALSE, expand = TRUE)
     base::Sys.sleep(3)
     
     exams::exams2pdf(
@@ -108,11 +110,13 @@ export_test_to_pdf <- function(
       sdir = tmpdir,
       quiet = TRUE,
       verbose = FALSE,
-      base64 = c("png", "jpg")
+      base64 = c("png", "jpg"),
+      envir = base::new.env()
     )
     
     base::Sys.sleep(3)
-    if (base::dir.exists(direxam)) fs::dir_delete(direxam)
+    if (base::dir.exists(direxam))
+      base::unlink(direxam, recursive = TRUE, force = FALSE, expand = TRUE)
     base::Sys.sleep(3)
     
     exams::exams2pdf(
@@ -127,16 +131,14 @@ export_test_to_pdf <- function(
       sdir = tmpdir,
       quiet = TRUE,
       verbose = FALSE,
-      base64 = c("png", "jpg")
+      base64 = c("png", "jpg"),
+      envir = base::new.env()
     )
     
     base::Sys.sleep(3)
-    if (base::dir.exists(direxam)) fs::dir_delete(direxam)
+    if (base::dir.exists(direxam))
+      base::unlink(direxam, recursive = TRUE, force = FALSE, expand = TRUE)
     base::Sys.sleep(3)
   }
   
-  record_solution <<- NULL
-  docformat <<- NULL
-  test_parameters <<- NULL
-  propositions <<- NULL
 }

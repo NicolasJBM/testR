@@ -9,7 +9,8 @@ export_test_to_lms(
   propositions,
   translations,
   exam_folder,
-  lms = "Moodle"
+  lms = "Moodle",
+  language
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ export_test_to_lms(
 \item{exam_folder}{Character. Path to the exam folder.}
 
 \item{lms}{Character. Name of the learning management system for which the export should be generated.}
+
+\item{language}{Character. ISO2 code of the printed language.}
 }
 \value{
 Path to the zip files containing the test(s)

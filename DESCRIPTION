@@ -21,8 +21,6 @@ Imports:
     readr,
     dplyr,
     exams,
-    fs,
-    gtools,
     purrr,
     rhandsontable,
     shinyalert,
@@ -34,6 +32,7 @@ Imports:
     shinyAce,
     shinyWidgets,
     shinydashboard,
+    rmarkdown,
     editR,
     chartR,
     classR
