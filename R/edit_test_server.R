@@ -1347,8 +1347,12 @@ edit_test_server <- function(
       # Students ###############################################################
       
       output$studentlist <- rhandsontable::renderRHandsontable({
-        base::paste0(modrval$test_folder, "/6_students/student_list.csv") |>
-          readr::read_csv(col_types = "ccccc") |>
+        path_to_list <- base::paste0(modrval$test_folder, "/6_students/student_list.csv")
+        shiny::req(base::file.exists(path_to_list))
+        readr::read_csv(
+          path_to_list, col_types = "ccccc",
+          locale = readr::locale(encoding = "Latin1")
+        ) |>
           rhandsontable::rhandsontable(
             width = "80%", rowHeaders = NULL, stretchH = "all", useTypes = FALSE
           ) |>
@@ -1356,10 +1360,10 @@ edit_test_server <- function(
       })
       
       shiny::observeEvent(input$savestudentlist, {
+        shiny::req(!base::is.null(input$studentlist))
         rhandsontable::hot_to_r(input$studentlist) |>
-          utils::write.csv(
-            base::paste0(modrval$test_folder, "/6_students/student_list.csv"),
-            row.names = FALSE
+          readr::write_csv(
+            base::paste0(modrval$test_folder, "/6_students/student_list.csv")
           )
         shinyalert::shinyalert(
           "Student list saved!",
