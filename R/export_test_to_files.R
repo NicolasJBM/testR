@@ -40,7 +40,7 @@ export_test_to_files <- function(
     if (format == "MD"){
       outdir <- base::paste0(exam_folder, "/mdfiles")
       if (!base::dir.exists(outdir)) base::dir.create(outdir)
-      record_solution <- FALSE
+      record_solution <- TRUE
       docformat <- "html"
       rmdfiles <- base::paste0(docdir, "/", test_parameters$version)
       for (file in rmdfiles) {
@@ -105,7 +105,7 @@ export_test_to_files <- function(
       test_permutations <- NA
     }
     
-    record_solution <- TRUE
+    record_solution <- FALSE
     
     if (format == "HTML"){
       outdir <- base::paste0(exam_folder, "/htmlfiles")

@@ -1254,8 +1254,9 @@ edit_test_server <- function(
           test_parameters$test_languages[1], ";", simplify = TRUE
         )
         shiny::req(base::length(languages)>0)
-        shiny::req(base::length(input$slctfileformat)>0)
-        pubnbr <- base::length(languages)*base::length(input$slctfileformat)
+        formats <- base::unique(c("MD",input$slctfileformat))
+        shiny::req(base::length(formats)>0)
+        pubnbr <- base::length(languages)*base::length(formats)
         pgr <- 1/pubnbr
         shinybusy::show_modal_progress_circle(
           value = pgr, text = "Publication progress"
@@ -1263,7 +1264,7 @@ edit_test_server <- function(
         for (l in languages){
           test_parameters <- test_parameters |>
             dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
-          for (format in input$slctfileformat){
+          for (f in formats){
             pgr <- pgr+1/pubnbr
             if (format == "PDF"){
               templatedir <- course_paths()$subfolders$exams
@@ -1277,7 +1278,7 @@ edit_test_server <- function(
               modrval$propositions,
               modrval$translations,
               modrval$test_folder,
-              format,
+              f,
               l,
               templatedir,
               template
