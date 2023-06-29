@@ -135,6 +135,8 @@ edit_test_server <- function(
       text <- NULL
       value <- NULL
       numeric_position <- NULL
+      flag <- NULL
+      langiso <- NULL
       
       modrval <- shiny::reactiveValues()
       
@@ -1056,15 +1058,20 @@ edit_test_server <- function(
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
-        languages <- stringr::str_split(
-          test_parameters$test_languages[1], ";", simplify = TRUE
-        )
+        exam_languages <- course_data()$languages |>
+          dplyr::select(langiso, language, flag) |>
+          dplyr::filter(langiso %in% test_parameters$test_languages[1])
         shinyWidgets::radioGroupButtons(
-          inputId = ns("slctlanguage"),
-          label = "Language",
-          choices = languages,
-          selected = languages[1],
-          status = "primary", size = "sm",
+          inputId = ns("slctlanguage"), label = NULL,
+          choiceNames = base::lapply(
+            base::seq_along(exam_languages$langiso), 
+            function(i) shiny::tagList(
+              shiny::tags$img(src = exam_languages$flag[i], width = 20, height = 15),
+              exam_languages$language[i]
+            )
+          ),
+          choiceValues = exam_languages$langiso,
+          status = "primary", justified = FALSE, size = "sm",
           checkIcon = base::list(yes = shiny::icon("check"))
         )
       })
