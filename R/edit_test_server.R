@@ -1058,9 +1058,12 @@ edit_test_server <- function(
         shiny::isolate({
           test_parameters <- modrval$test_parameters
         })
+        languages <- test_parameters$test_languages[1] |>
+          stringr::str_split(";", simplify = TRUE) |>
+          base::as.character()
         exam_languages <- course_data()$languages |>
           dplyr::select(langiso, language, flag) |>
-          dplyr::filter(langiso %in% test_parameters$test_languages[1])
+          dplyr::filter(langiso %in% languages)
         shinyWidgets::radioGroupButtons(
           inputId = ns("slctlanguage"), label = NULL,
           choiceNames = base::lapply(
