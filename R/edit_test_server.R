@@ -137,6 +137,7 @@ edit_test_server <- function(
       numeric_position <- NULL
       flag <- NULL
       langiso <- NULL
+      difficulty <- NULL
       
       modrval <- shiny::reactiveValues()
       
