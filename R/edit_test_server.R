@@ -733,7 +733,7 @@ edit_test_server <- function(
           tidyr::replace_na(base::list(
             success = base::mean(base_test_statistics$success, na.rm = TRUE)
           )) |>
-          dplyr::mutate(expected = points * success)
+          dplyr::mutate(expected = points * success / 100)
         
         distinct_questions <- base_test_statistics |>
           dplyr::group_by(section, bloc) |>
@@ -857,7 +857,7 @@ edit_test_server <- function(
             by = "question"
           ) |>
           dplyr::left_join(
-            dplyr::select(document_parameters, question = file, success, discrimination, guess), 
+            dplyr::select(document_parameters, question = file, difficulty, discrimination, guess), 
             by = "question"
           ) |>
           dplyr::mutate(position = purrr::map_chr(position, classR::trees_find_higher_level, y = input$slctdepth)) |>
