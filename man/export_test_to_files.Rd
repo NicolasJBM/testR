@@ -32,9 +32,6 @@ export_test_to_files(
 
 \item{template}{Character. Name of the template to be used to format the test.}
 }
-\value{
-Path to the zip files containing the test(s)
-}
 \description{
 Function creating tests to be printed out.
 }

@@ -1,14 +1,17 @@
 #' @name edit_test_server
-#' @title Create tests.
+#' @title Create, edit, and publish tests.
 #' @author Nicolas Mangin
-#' @description Module allowing the user to create tests from a selection of questions.
+#' @description Module allowing the user to create, edit and publish tests from a questions bank.
 #' @param id Character. ID of the module to connect the user interface to the appropriate server side.
 #' @param filtered Reactive. List of pre-selected documents.
 #' @param course_data Reactive. Function containing all the course data loaded with the course.
 #' @param tree Reactive. Selected tree.
 #' @param test Reactive. Selected test.
 #' @param course_paths Reactive. Function containing a list of paths to the different folders and databases on local disk.
-#' @return Save the test parameters in the relevant test sub-folder in the folder "5_tests".
+#' @return Save the test parameters in the relevant test sub-folder in the appropriate test subfolder.
+#' @importFrom chartR draw_composition_barchart
+#' @importFrom chartR draw_composition_heatmap
+#' @importFrom chartR draw_composition_scatterplot
 #' @importFrom dplyr arrange
 #' @importFrom dplyr bind_cols
 #' @importFrom dplyr bind_rows
@@ -19,21 +22,29 @@
 #' @importFrom dplyr mutate
 #' @importFrom dplyr mutate_if
 #' @importFrom dplyr n
+#' @importFrom dplyr rename
+#' @importFrom dplyr sample_n
 #' @importFrom dplyr select
+#' @importFrom dplyr starts_with
 #' @importFrom dplyr summarise
 #' @importFrom dplyr ungroup
+#' @importFrom editR display_question
 #' @importFrom editR make_infobox
 #' @importFrom editR selection_server
-#' @importFrom editR view_document
 #' @importFrom purrr map
+#' @importFrom purrr map_chr
 #' @importFrom purrr map_dbl
 #' @importFrom purrr map_int
+#' @importFrom readr locale
+#' @importFrom readr read_csv
+#' @importFrom readr write_csv
 #' @importFrom rhandsontable hot_col
 #' @importFrom rhandsontable hot_cols
 #' @importFrom rhandsontable hot_context_menu
 #' @importFrom rhandsontable hot_to_r
 #' @importFrom rhandsontable renderRHandsontable
 #' @importFrom rhandsontable rhandsontable
+#' @importFrom shiny NS
 #' @importFrom shiny actionButton
 #' @importFrom shiny column
 #' @importFrom shiny dateInput
@@ -42,33 +53,37 @@
 #' @importFrom shiny icon
 #' @importFrom shiny isolate
 #' @importFrom shiny moduleServer
-#' @importFrom shiny NS
 #' @importFrom shiny numericInput
 #' @importFrom shiny observe
 #' @importFrom shiny observeEvent
 #' @importFrom shiny reactive
 #' @importFrom shiny reactiveValues
+#' @importFrom shiny renderPlot
 #' @importFrom shiny renderUI
 #' @importFrom shiny req
 #' @importFrom shiny selectInput
+#' @importFrom shiny tagList
+#' @importFrom shiny updateSelectInput
 #' @importFrom shinyAce aceEditor
-#' @importFrom shinyalert shinyalert
-#' @importFrom shinydashboard valueBox
 #' @importFrom shinyWidgets multiInput
 #' @importFrom shinyWidgets radioGroupButtons
 #' @importFrom shinyWidgets switchInput
-#' @importFrom stats na.omit
-#' @importFrom stats runif
+#' @importFrom shinyalert shinyalert
+#' @importFrom shinybusy remove_modal_spinner
+#' @importFrom shinybusy show_modal_progress_circle
+#' @importFrom shinybusy update_modal_progress
+#' @importFrom shinydashboard valueBox
 #' @importFrom stringr str_detect
+#' @importFrom stringr str_extract
 #' @importFrom stringr str_remove_all
 #' @importFrom stringr str_replace
 #' @importFrom stringr str_replace_all
+#' @importFrom stringr str_split
 #' @importFrom tibble rowid_to_column
 #' @importFrom tibble tibble
 #' @importFrom tidyr nest
 #' @importFrom tidyr replace_na
 #' @importFrom tidyr unnest
-#' @importFrom classR trees_find_higher_level
 #' @export
 
 
@@ -138,6 +153,8 @@ edit_test_server <- function(
       flag <- NULL
       langiso <- NULL
       difficulty <- NULL
+      code <- NULL
+      tag <- NULL
       
       modrval <- shiny::reactiveValues()
       
@@ -479,7 +496,7 @@ edit_test_server <- function(
           add <- tibble::tibble(
             question = add_questions,
             section = "Z",
-            bloc = available_blocs[1:base::length(add_questions)],
+            bloc = available_blocs[base::seq_len(base::length(add_questions))],
             altnbr = 5,
             points = 0,
             partial_credits = 0,
@@ -591,7 +608,7 @@ edit_test_server <- function(
           rhandsontable::rhandsontable(
             width = "80%", rowHeaders = NULL, stretchH = "all"
           ) |>
-          rhandsontable::hot_col(c(1:4), readOnly = TRUE) |>
+          rhandsontable::hot_col(1:4, readOnly = TRUE) |>
           rhandsontable::hot_cols(
             colWidths = c("10%","40%","10%","5%","5%","5%","5%","5%","5%","5%","5%")
           ) |>
@@ -688,7 +705,7 @@ edit_test_server <- function(
             modrval$test_folder, "/2_versions"
           ), full.names = FALSE)
           
-          all_expected <- c()
+          all_expected <- base::character(0)
           for (l in languages){
             all_expected <- c(
               all_expected,
@@ -725,7 +742,7 @@ edit_test_server <- function(
             dplyr::select(course_data()$documents, file, code, language),
             by = "file"
           ) |>
-          dplyr::left_join(course_data()$document_parameters, by = c("file")) |>
+          dplyr::left_join(course_data()$document_parameters, by = "file") |>
           dplyr::select(
             file, section, bloc, points, test_points, test_duration, success
           )
@@ -887,7 +904,7 @@ edit_test_server <- function(
           tibble::tibble(
             category = "type",
             catvalue = c("Statements","Alternatives","Computation","Essay","Problem"),
-            order = c(1:5)
+            order = 1:5
           ),
           dplyr::select(tags, category = tag, catvalue = value)
         )

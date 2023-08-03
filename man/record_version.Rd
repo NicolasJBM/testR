@@ -15,11 +15,8 @@ record_version(record_solution, test, version, exercise)
 
 \item{exercise}{Tibble. Output of one of the "questions_create_..." functions setting interrogations, propositions, and explanations among other pieces of information.}
 }
-\value{
-Save on disk in the folder "d_feedbacks" of the relevant test a tibble used to produce individual reports later.
-}
 \description{
-If requested, save the feedback associated with each possible answer of each possible version so that it can be used later to produce individual reports for students.
+If requested, save the explanations associated with each proposition of each possible version so that it can be used later to produce individual reports for students.
 }
 \author{
 Nicolas Mangin

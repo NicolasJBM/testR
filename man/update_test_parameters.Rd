@@ -2,15 +2,12 @@
 % Please edit documentation in R/update_test_parameters.R
 \name{update_test_parameters}
 \alias{update_test_parameters}
-\title{Update default test parameters}
+\title{Update test parameters}
 \usage{
 update_test_parameters(documents)
 }
 \arguments{
 \item{documents}{Tibble. List of documents}
-}
-\value{
-Save on disk updated default test_parameters and return it
 }
 \description{
 Function adding missing questions as unclassified, removing non-existing questions, and updating question information in test parameters from a document list.

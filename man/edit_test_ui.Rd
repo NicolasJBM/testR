@@ -10,10 +10,10 @@ edit_test_ui(id)
 \item{id}{Character. ID of the module to connect the user interface to the appropriate server side.}
 }
 \value{
-Save the test parameters in the relevant test sub-folder in the folder "5_materials/blog".
+Save the test parameters in the relevant test sub-folder in the appropriate test subfolder.
 }
 \description{
-Module allowing the user to create tests from a selection of questions.
+Module allowing the user to create, edit and publish tests from a questions bank.
 }
 \author{
 Nicolas Mangin

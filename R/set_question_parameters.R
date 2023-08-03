@@ -8,7 +8,10 @@
 #' @param record_solution Logical. Whether the propositions associated to the question should be recorded in the folder "d_feedback".
 #' @return Set all the parameters for the question.
 #' @importFrom dplyr filter
+#' @importFrom dplyr mutate
 #' @importFrom stringr str_remove
+#' @importFrom stringr str_replace_all
+#' @importFrom tibble tibble
 #' @export
 
 

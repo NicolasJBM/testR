@@ -1,38 +1,40 @@
 Package: testR
-Type: Package
-Title: Toolbox to create questions, tests, and feedback
-Version: 1.1
-Date: 2022-09-12
+Title: Create and publish tests
+Version: 1.30
+Date: 2023-08-03
 Authors@R: 
     person(given = "Nicolas",
            family = "Mangin",
            role = c("aut", "cre"),
            email = "nicolas.jb.mangin@gmail.com",
            comment = c(ORCID = "0000-0002-1597-9376"))
-Description: Functions and interfaces to facilitate the creation of questions and tests and feedback for formative or summative assessments.
+Description: Functions and interfaces to facilitate the creation and publication of formative and summative assessments.
 Encoding: UTF-8
 License: GPL-3 | file LICENSE
 Depends: R (>= 3.6)
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Imports:
-    shiny,
-    knitr,
-    readr,
     dplyr,
-    exams,
-    purrr,
-    rhandsontable,
-    shinyalert,
-    shinybusy,
-    shinydashboardPlus,
-    stringr,
     tibble,
-    tidyr,
+    chartR,
+    classR,
+    editR,
+    purrr,
+    readr,
+    rhandsontable,
+    shiny,
     shinyAce,
     shinyWidgets,
+    shinyalert,
+    shinybusy,
     shinydashboard,
-    rmarkdown,
-    editR,
-    chartR,
-    classR
+    stringr,
+    tidyr,
+    exams,
+    knitr,
+    rmarkdown
+Remotes:
+    NicolasJBM/editR,
+    NicolasJBM/classR,
+    NicolasJBM/chartR

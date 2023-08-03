@@ -7,7 +7,7 @@
 create_essay(propositions, codes, interrogation)
 }
 \arguments{
-\item{propositions}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which items (alternatives) and associated explanations are selected.}
 
 \item{codes}{Character string. Code of the question to which the propositions are linked.}
 
@@ -17,7 +17,7 @@ create_essay(propositions, codes, interrogation)
 Tibble. Table containing all the information about the propositions made to the student.
 }
 \description{
-Function creating an essay question by retrieving grading criteria from the feedback table.
+Function creating an essay question and retrieving grading criteria from the propositions table.
 }
 \author{
 Nicolas Mangin

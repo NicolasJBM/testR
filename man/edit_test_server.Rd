@@ -2,7 +2,7 @@
 % Please edit documentation in R/edit_test_server.R
 \name{edit_test_server}
 \alias{edit_test_server}
-\title{Create tests.}
+\title{Create, edit, and publish tests.}
 \usage{
 edit_test_server(id, filtered, course_data, tree, test, course_paths)
 }
@@ -20,10 +20,10 @@ edit_test_server(id, filtered, course_data, tree, test, course_paths)
 \item{course_paths}{Reactive. Function containing a list of paths to the different folders and databases on local disk.}
 }
 \value{
-Save the test parameters in the relevant test sub-folder in the folder "5_tests".
+Save the test parameters in the relevant test sub-folder in the appropriate test subfolder.
 }
 \description{
-Module allowing the user to create tests from a selection of questions.
+Module allowing the user to create, edit and publish tests from a questions bank.
 }
 \author{
 Nicolas Mangin

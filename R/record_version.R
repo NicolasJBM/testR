@@ -1,15 +1,13 @@
 #' @name record_version
 #' @title Save feedback
 #' @author Nicolas Mangin
-#' @description If requested, save the feedback associated with each possible answer of each possible version so that it can be used later to produce individual reports for students.
+#' @description If requested, save the explanations associated with each proposition of each possible version so that it can be used later to produce individual reports for students.
 #' @param record_solution Logical. Whether an individual report will be sent later to each student.
 #' @param test Character. Name of the test.
 #' @param version Character. Name of the version of the question.
 #' @param exercise Tibble. Output of one of the "questions_create_..." functions setting interrogations, propositions, and explanations among other pieces of information.
-#' @return Save on disk in the folder "d_feedbacks" of the relevant test a tibble used to produce individual reports later.
 #' @importFrom dplyr mutate
 #' @importFrom dplyr select
-#' @importFrom utils write.csv
 #' @export
 
 

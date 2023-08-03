@@ -1,15 +1,15 @@
 #' @name create_essay
 #' @title Create an essay
 #' @author Nicolas Mangin
-#' @description Function creating an essay question by retrieving grading criteria from the feedback table.
-#' @param propositions Tibble. Table from which items (alternatives) and associated feedback are selected.
+#' @description Function creating an essay question and retrieving grading criteria from the propositions table.
+#' @param propositions Tibble. Table from which items (alternatives) and associated explanations are selected.
 #' @param codes Character string. Code of the question to which the propositions are linked.
 #' @param interrogation Character. Question asked to the student.
 #' @return Tibble. Table containing all the information about the propositions made to the student.
-#' @importFrom dplyr filter
-#' @importFrom tibble tibble
 #' @importFrom dplyr arrange
+#' @importFrom dplyr filter
 #' @importFrom dplyr mutate
+#' @importFrom tibble tibble
 #' @export
 
 
@@ -19,6 +19,7 @@ create_essay <- function(propositions, codes, interrogation){
   language <- NULL
   proposition <- NULL
   value <- NULL
+  code <- NULL
   
   
   exercise <- propositions |>

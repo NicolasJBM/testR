@@ -1,18 +1,18 @@
 #' @name create_alternatives
 #' @title Create a single or multiple true or false alternative selection question
 #' @author Nicolas Mangin
-#' @description Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on alternatives.
-#' @param propositions Tibble. Table from which items (alternatives) and associated feedback are selected.
+#' @description Function creating the interrogation and different propositions as well as the explanations associated with a given version of a question based on alternatives.
+#' @param propositions Tibble. Table from which items (alternatives) and associated explanations are selected.
 #' @param codes Character string. Code of the question to which the propositions are linked.
 #' @param situation List. The entry selected as the situation which determines which items are true.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
 #' @param correctnbr Integer. Number of correct propositions (i.e. choices) to offer to the student.
 #' @return Tibble. Table containing all the information about the propositions made to the student.
-#' @importFrom dplyr filter
-#' @importFrom dplyr slice_sample
 #' @importFrom dplyr bind_rows
 #' @importFrom dplyr case_when
-#' @importFrom dplyr select
+#' @importFrom dplyr filter
+#' @importFrom dplyr mutate
+#' @importFrom dplyr slice_sample
 #' @importFrom tibble tibble
 #' @export
 
@@ -23,6 +23,7 @@ create_alternatives <- function(
   type <- NULL
   language <- NULL
   value <- NULL
+  code <- NULL
   
   interrogation <- situation[[1]]$interrogation
   correct_answer <- situation[[1]]$correct
@@ -63,7 +64,7 @@ create_alternatives <- function(
   } else {
     
     exercise <- tibble::tibble(
-      item = c(1:altnbr), code = "", type = "", document = "",
+      item = 1:altnbr, code = "", type = "", document = "",
       language = "", modifications = 0,
       proposition = "", value = c(1, base::rep(0, (altnbr-1))), scale = "",
       explanation = "", keywords = ""

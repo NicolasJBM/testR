@@ -1,18 +1,19 @@
 #' @name create_statements
 #' @title Create a single or multiple true or false statement selection question
 #' @author Nicolas Mangin
-#' @description Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on statements.
-#' @param propositions Tibble. Table from which items (statements) and associated feedback are selected.
+#' @description Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on either true or false statements.
+#' @param propositions Tibble. Table from which items (statements) and associated explanations are selected.
 #' @param documents Character vector. List of document ids from that the selected statements should address.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
 #' @param truenbr Integer. Number of true propositions (i.e. choices) to offer to the student.
 #' @param indication Logical. Whether the number of alternatives to select should be specified in the question.
 #' @return Tibble. Table containing all the information about the propositions made to the student.
-#' @importFrom dplyr filter
-#' @importFrom dplyr slice_sample
 #' @importFrom dplyr bind_rows
 #' @importFrom dplyr case_when
-#' @importFrom dplyr select
+#' @importFrom dplyr filter
+#' @importFrom dplyr mutate
+#' @importFrom dplyr slice_sample
+#' @importFrom tibble rowid_to_column
 #' @importFrom tibble tibble
 #' @export
 
@@ -52,7 +53,7 @@ create_statements <- function(
   } else {
     
     exercise <- tibble::tibble(
-      item = c(1:altnbr), code = "", type = "", document = "",
+      item = 1:altnbr, code = "", type = "", document = "",
       language = "", modifications = 0,
       proposition = "", value = c(1, base::rep(0, (altnbr-1))), scale = "",
       explanation = "", keywords = ""

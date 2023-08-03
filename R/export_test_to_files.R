@@ -10,12 +10,19 @@
 #' @param language Character. ISO2 code of the printed language.
 #' @param template_folder Character. Path to the tex folder.
 #' @param template Character. Name of the template to be used to format the test.
-#' @return Path to the zip files containing the test(s)
-#' @importFrom dplyr select
-#' @importFrom dplyr arrange
+#' @importFrom dplyr bind_rows
+#' @importFrom dplyr filter
 #' @importFrom dplyr group_by
-#' @importFrom dplyr summarise
-#' @importFrom utils globalVariables
+#' @importFrom dplyr sample_n
+#' @importFrom dplyr select
+#' @importFrom exams exams2html
+#' @importFrom exams exams2pdf
+#' @importFrom knitr knit
+#' @importFrom rmarkdown render
+#' @importFrom shiny req
+#' @importFrom stringr str_replace
+#' @importFrom stringr str_replace_all
+#' @importFrom tidyr nest
 #' @export
 
 
@@ -92,7 +99,7 @@ export_test_to_files <- function(
     tests <- base::list()
     
     if (nbrsections > 1){
-      test_permutations <- testR::permute_sections(c(1:nbrsections))
+      test_permutations <- testR::permute_sections(1:nbrsections)
       mcq <- base::split(mcq, mcq$section)
       for (i in base::seq_len(base::nrow(test_permutations))){
         question_list <- mcq[test_permutations[i,]]

@@ -2,12 +2,12 @@
 % Please edit documentation in R/create_computation.R
 \name{create_computation}
 \alias{create_computation}
-\title{Create a single or multiple true or false alternative selection question}
+\title{Create a closed or open computation question}
 \usage{
 create_computation(propositions, codes, altnbr, interrogation)
 }
 \arguments{
-\item{propositions}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which items (alternatives) and associated explanations are selected.}
 
 \item{codes}{Character string. Code of the question to which the propositions are linked.}
 
@@ -19,7 +19,7 @@ create_computation(propositions, codes, altnbr, interrogation)
 Tibble. Table containing all the information about the propositions made to the student.
 }
 \description{
-Function creating a computation question by retrieving in feedback
+Function creating a computation question which can be either open (altnbr = 0) or closed. Explanations associated with different answers are also retrieved.
 }
 \author{
 Nicolas Mangin

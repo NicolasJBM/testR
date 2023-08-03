@@ -1,14 +1,12 @@
 #' @name update_test_parameters
-#' @title Update default test parameters
+#' @title Update test parameters
 #' @author Nicolas Mangin
 #' @description Function adding missing questions as unclassified, removing non-existing questions, and updating question information in test parameters from a document list.
 #' @param documents Tibble. List of documents
-#' @return Save on disk updated default test_parameters and return it
 #' @importFrom dplyr filter
 #' @importFrom dplyr mutate
-#' @importFrom purrr map2_chr
-#' @importFrom stats na.omit
 #' @importFrom dplyr select
+#' @importFrom purrr map2_chr
 #' @export
 
 

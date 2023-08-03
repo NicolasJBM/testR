@@ -1,21 +1,28 @@
 #' @name export_test_to_lms
-#' @title Export test to blackboard
+#' @title Export test to LMS.
 #' @author Nicolas Mangin
-#' @description Function creating tests to be uploaded on Blackboard.
+#' @description Function creating tests to be uploaded on various Learning Management Systems.
 #' @param test_parameters Tibble. List of questions with associated parameters.
 #' @param propositions Tibble. List of propositions, criteria, and associated explanations.
 #' @param translations Tibble. Table containing translations of items and explanations.
 #' @param exam_folder Character. Path to the exam folder.
 #' @param lms Character. Name of the learning management system for which the export should be generated.
 #' @param language Character. ISO2 code of the printed language.
-#' @return Path to the zip files containing the test(s)
-#' @importFrom shinybusy show_modal_spinner
-#' @importFrom dplyr select
 #' @importFrom dplyr arrange
 #' @importFrom dplyr group_by
-#' @importFrom exams exams2blackboard
+#' @importFrom dplyr select
 #' @importFrom dplyr summarise
-#' @importFrom utils globalVariables
+#' @importFrom exams exams2arsnova
+#' @importFrom exams exams2blackboard
+#' @importFrom exams exams2canvas
+#' @importFrom exams exams2ilias
+#' @importFrom exams exams2moodle
+#' @importFrom exams exams2openolat
+#' @importFrom exams exams2particify
+#' @importFrom exams exams2qti12
+#' @importFrom exams exams2qti21
+#' @importFrom exams exams2tcexam
+#' @importFrom exams exams2testvision
 #' @export
 
 

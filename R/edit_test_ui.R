@@ -1,12 +1,25 @@
 #' @name edit_test_ui
 #' @title Create tests.
 #' @author Nicolas Mangin
-#' @description Module allowing the user to create tests from a selection of questions.
+#' @description Module allowing the user to create, edit and publish tests from a questions bank.
 #' @param id Character. ID of the module to connect the user interface to the appropriate server side.
-#' @return Save the test parameters in the relevant test sub-folder in the folder "5_materials/blog".
-#' @import shiny
-#' @importFrom shinydashboardPlus box
+#' @return Save the test parameters in the relevant test sub-folder in the appropriate test subfolder.
+#' @importFrom editR selection_ui
 #' @importFrom rhandsontable rHandsontableOutput
+#' @importFrom shiny NS
+#' @importFrom shiny actionButton
+#' @importFrom shiny column
+#' @importFrom shiny fluidRow
+#' @importFrom shiny icon
+#' @importFrom shiny numericInput
+#' @importFrom shiny plotOutput
+#' @importFrom shiny selectInput
+#' @importFrom shiny span
+#' @importFrom shiny tabPanel
+#' @importFrom shiny tagList
+#' @importFrom shiny uiOutput
+#' @importFrom shinyWidgets checkboxGroupButtons
+#' @importFrom shinydashboard tabBox
 #' @export
 
 

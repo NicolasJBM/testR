@@ -1,17 +1,17 @@
 #' @name create_computation
-#' @title Create a single or multiple true or false alternative selection question
+#' @title Create a closed or open computation question
 #' @author Nicolas Mangin
-#' @description Function creating a computation question by retrieving in feedback
-#' @param propositions Tibble. Table from which items (alternatives) and associated feedback are selected.
+#' @description Function creating a computation question which can be either open (altnbr = 0) or closed. Explanations associated with different answers are also retrieved.
+#' @param propositions Tibble. Table from which items (alternatives) and associated explanations are selected.
 #' @param codes Character string. Code of the question to which the propositions are linked.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
 #' @param interrogation Character. Question asked to the student.
 #' @return Tibble. Table containing all the information about the propositions made to the student.
-#' @importFrom dplyr filter
-#' @importFrom dplyr slice_sample
 #' @importFrom dplyr bind_rows
-#' @importFrom tibble tibble
+#' @importFrom dplyr filter
 #' @importFrom dplyr mutate
+#' @importFrom dplyr slice_sample
+#' @importFrom tibble tibble
 #' @export
 
 
@@ -20,6 +20,7 @@ create_computation <- function(propositions, codes, altnbr, interrogation){
   type <- NULL
   language <- NULL
   value <- NULL
+  code <- NULL
   
   selected <- propositions |>
     dplyr::filter(
@@ -51,7 +52,7 @@ create_computation <- function(propositions, codes, altnbr, interrogation){
   } else {
     
     exercise <- tibble::tibble(
-      item = c(1:altnbr), code = "", type = "", document = "",
+      item = 1:altnbr, code = "", type = "", document = "",
       language = "", modifications = 0,
       proposition = "right1", value = c(1, base::rep(0, (altnbr-1))),
       scale = "", explanation = "", keywords = ""

@@ -7,7 +7,7 @@
 create_statements(propositions, documents, altnbr, truenbr, indication = TRUE)
 }
 \arguments{
-\item{propositions}{Tibble. Table from which items (statements) and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which items (statements) and associated explanations are selected.}
 
 \item{documents}{Character vector. List of document ids from that the selected statements should address.}
 
@@ -21,7 +21,7 @@ create_statements(propositions, documents, altnbr, truenbr, indication = TRUE)
 Tibble. Table containing all the information about the propositions made to the student.
 }
 \description{
-Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on statements.
+Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on either true or false statements.
 }
 \author{
 Nicolas Mangin

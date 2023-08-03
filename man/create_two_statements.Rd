@@ -7,7 +7,7 @@
 create_two_statements(propositions, documents)
 }
 \arguments{
-\item{propositions}{Tibble. Table from which statements and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which statements and associated explanations are selected.}
 
 \item{documents}{Character vector. List of document ids from that the selected statements should address.}
 }
@@ -15,7 +15,7 @@ create_two_statements(propositions, documents)
 Tibble. Table containing all the information about the propositions (i.e. choices) made to the student.
 }
 \description{
-Function creating the different propositions as well as the feedback associated with a given version of a question in which two statements can be either true or false.
+Function creating the different propositions as well as the explanation associated with a given version of a question in which two statements can be either true or false.
 }
 \author{
 Nicolas Mangin

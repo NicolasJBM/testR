@@ -1,15 +1,16 @@
 #' @name create_two_statements
 #' @title Create a two-statements question
 #' @author Nicolas Mangin
-#' @description Function creating the different propositions as well as the feedback associated with a given version of a question in which two statements can be either true or false.
-#' @param propositions Tibble. Table from which statements and associated feedback are selected.
+#' @description Function creating the different propositions as well as the explanation associated with a given version of a question in which two statements can be either true or false.
+#' @param propositions Tibble. Table from which statements and associated explanations are selected.
 #' @param documents Character vector. List of document ids from that the selected statements should address.
 #' @return Tibble. Table containing all the information about the propositions (i.e. choices) made to the student.
-#' @importFrom dplyr filter
-#' @importFrom dplyr slice_sample
 #' @importFrom dplyr bind_rows
 #' @importFrom dplyr case_when
+#' @importFrom dplyr filter
+#' @importFrom dplyr mutate
 #' @importFrom dplyr select
+#' @importFrom dplyr slice_sample
 #' @importFrom tibble tibble
 #' @export
 
@@ -57,7 +58,7 @@ create_two_statements <- function(
     exercise <- tibble::tibble(
       number = c(1,1,2,2,3,3,4,4),
       letter = c("a","a","b","b","c","c","d","d"),
-      item = c(1:8), code = "", type = "", document = "",
+      item = 1:8, code = "", type = "", document = "",
       language = "", modifications = 0,
       interrogation = "Are both statement false? Is statement one true while statement two is false? The opposite? Or are they both true?",
       proposition = "", value = c(1, 1, base::rep(0, 6)),

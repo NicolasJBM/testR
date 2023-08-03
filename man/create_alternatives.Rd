@@ -7,7 +7,7 @@
 create_alternatives(propositions, codes, situation, altnbr, correctnbr)
 }
 \arguments{
-\item{propositions}{Tibble. Table from which items (alternatives) and associated feedback are selected.}
+\item{propositions}{Tibble. Table from which items (alternatives) and associated explanations are selected.}
 
 \item{codes}{Character string. Code of the question to which the propositions are linked.}
 
@@ -21,7 +21,7 @@ create_alternatives(propositions, codes, situation, altnbr, correctnbr)
 Tibble. Table containing all the information about the propositions made to the student.
 }
 \description{
-Function creating the interrogation and different propositions as well as the feedback associated with a given version of a question based on alternatives.
+Function creating the interrogation and different propositions as well as the explanations associated with a given version of a question based on alternatives.
 }
 \author{
 Nicolas Mangin

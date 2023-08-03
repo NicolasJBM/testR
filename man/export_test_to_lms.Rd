@@ -2,7 +2,7 @@
 % Please edit documentation in R/export_test_to_lms.R
 \name{export_test_to_lms}
 \alias{export_test_to_lms}
-\title{Export test to blackboard}
+\title{Export test to LMS.}
 \usage{
 export_test_to_lms(
   test_parameters,
@@ -26,11 +26,8 @@ export_test_to_lms(
 
 \item{language}{Character. ISO2 code of the printed language.}
 }
-\value{
-Path to the zip files containing the test(s)
-}
 \description{
-Function creating tests to be uploaded on Blackboard.
+Function creating tests to be uploaded on various Learning Management Systems.
 }
 \author{
 Nicolas Mangin

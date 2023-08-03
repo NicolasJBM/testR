@@ -2,7 +2,7 @@
 % Please edit documentation in R/prepare_evaluation.R
 \name{prepare_evaluation}
 \alias{prepare_evaluation}
-\title{Prepare evaluation of an expression}
+\title{Prepare expression evaluation}
 \usage{
 prepare_evaluation(x)
 }
@@ -13,7 +13,7 @@ prepare_evaluation(x)
 Expression of formula which can then be computed to produce the numeric part of a proposition.
 }
 \description{
-Function taking a string of characters and transforming it to allow its interpretation as an expression or formula to be computed.
+Function taking a string of characters and transforming it to allow its interpretation as an expression or formula to be computed. This function is necessary to make computation questions as alternatives are numbers are generated as the question is created.
 }
 \author{
 Nicolas Mangin
