@@ -1,0 +1,28 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# testR
+
+<!-- badges: start -->
+
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/testR)](https://CRAN.R-project.org/package=testR)
+[![R-CMD-check](https://github.com/NicolasJBM/testR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/NicolasJBM/testR/actions/workflows/R-CMD-check.yaml)
+[![CodeFactor](https://www.codefactor.io/repository/github/NicolasJBM/testR/badge)](https://www.codefactor.io/repository/github/NicolasJBM/testR)
+<!-- badges: end -->
+
+The goal of testR is to …
+
+## Installation
+
+You can install the development version of testR from
+[GitHub](https://github.com/) with:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("NicolasJBM/testR")
+```
+
+## Example
