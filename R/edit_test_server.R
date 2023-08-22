@@ -587,6 +587,7 @@ edit_test_server <- function(
       output$question_organization <- rhandsontable::renderRHandsontable({
         input$update_question_organization
         shiny::req(!base::is.na(tree()$course[1]))
+        shiny::req(base::nchar(modrval$parameters_path) > 3)
         shiny::req(base::file.exists(modrval$parameters_path))
         base::load(modrval$parameters_path)
         test_parameters |>
