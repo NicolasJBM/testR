@@ -51,7 +51,7 @@ export_test_to_lms <- function(
     dplyr::select(section, bloc, points, version) |>
     dplyr::group_by(section, bloc) |>
     dplyr::summarise(
-      points = base::max(points), version = c(version), .groups = "drop"
+      points = base::max(points), version = c(version), .groups = "drop" # the concatenation of version may trigger the deprecation warning
     )
   
   record_solution <- TRUE

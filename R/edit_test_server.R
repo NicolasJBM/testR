@@ -70,7 +70,7 @@
 #' @importFrom shinyWidgets switchInput
 #' @importFrom shinyalert shinyalert
 #' @importFrom shinybusy remove_modal_spinner
-#' @importFrom shinybusy show_modal_progress_circle
+#' @importFrom shinybusy show_modal_progress_line
 #' @importFrom shinybusy update_modal_progress
 #' @importFrom shinydashboard valueBox
 #' @importFrom stringr str_detect
@@ -166,7 +166,7 @@ edit_test_server <- function(
         shiny::req(!base::is.null(filtered()))
         filtered() |>
           dplyr::filter(type %in% c(
-            "Statements","Alternatives","Computation","Essay","Problem")
+            "Free","Statements","Alternatives","Computation","Essay","Problem")
           )
       })
       
@@ -694,8 +694,13 @@ edit_test_server <- function(
               v <- stringr::str_replace(v, "^..", l)
               v <- base::paste0(modrval$test_folder, "/2_versions/", v)
               lines <- base::readLines(q)
-              vid <- stringr::str_replace(test_parameters$version[i], "^..", l)
-              lines[2] <- base::paste0('versionid <- "', vid,'"')
+              if (!base::any(stringr::str_detect(
+                  lines,
+                  "exextra\\[type\\]:[ ]{0,3}Free"
+                ))){
+                vid <- stringr::str_replace(test_parameters$version[i], "^..", l)
+                lines[2] <- base::paste0('versionid <- "', vid,'"')
+              }
               base::writeLines(lines, v, useBytes = TRUE)
             }
           }
@@ -1041,9 +1046,14 @@ edit_test_server <- function(
             
           for (i in base::seq_len(base::nrow(versions_to_change))){
             lines <- base::readLines(versions_to_change$question_path[i])
-            lines[2] <- base::paste0(
-              'versionid <- "', versions_to_change$version[i],'"'
-            )
+            if (!base::any(stringr::str_detect(
+              lines,
+              "exextra\\[type\\]:[ ]{0,3}Free"
+            ))){
+              lines[2] <- base::paste0(
+                'versionid <- "', versions_to_change$version[i],'"'
+              )
+            }
             base::writeLines(
               lines, versions_to_change$version_path[i], useBytes = TRUE
             )
@@ -1286,16 +1296,20 @@ edit_test_server <- function(
         formats <- base::unique(c("MD",input$slctfileformat))
         shiny::req(base::length(formats)>0)
         pubnbr <- base::length(languages)*base::length(formats)
-        pgr <- 1/pubnbr
-        shinybusy::show_modal_progress_circle(
-          value = pgr, text = "Publication progress"
+        pgr <- 0
+        shinybusy::show_modal_progress_line(
+          value = pgr, text = "Starting the publication process"
         )
         for (l in languages){
           test_parameters <- test_parameters |>
             dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
           for (f in formats){
             pgr <- pgr+1/pubnbr
-            if (format == "PDF"){
+            shinybusy::update_modal_progress(
+              value = pgr,
+              text = base::paste0("Generating ", l, " files for ", f,"...")
+            )
+            if (f == "PDF"){
               templatedir <- course_paths()$subfolders$exams
               template <- input$slctexamtemplate
             } else {
@@ -1312,7 +1326,6 @@ edit_test_server <- function(
               templatedir,
               template
             )
-            shinybusy::update_modal_progress(pgr)
           }
         }
         shinybusy::remove_modal_spinner()
@@ -1331,14 +1344,18 @@ edit_test_server <- function(
         shiny::req(base::length(languages)>0)
         shiny::req(base::length(input$slctlms)>0)
         pubnbr <- base::length(languages)*base::length(input$slctlms)
-        pgr <- 1/pubnbr
-        shinybusy::show_modal_progress_circle(
-          value = pgr, text = "Publication progress"
+        pgr <- 0
+        shinybusy::show_modal_progress_line(
+          value = pgr, text = "Starting the publication progress"
         )
         for (l in languages){
           test_parameters <- test_parameters |>
             dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
           for (lms in input$slctlms){
+            shinybusy::update_modal_progress(
+              value = pgr,
+              text = base::paste0("Generating ", l, " files for ", lms,"...")
+            )
             pgr <- pgr+1/pubnbr
             testR::export_test_to_lms(
               test_parameters,
@@ -1347,7 +1364,6 @@ edit_test_server <- function(
               modrval$test_folder,
               lms, l
             )
-            shinybusy::update_modal_progress(pgr)
           }
         }
         shinybusy::remove_modal_spinner()
