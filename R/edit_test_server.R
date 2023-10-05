@@ -910,7 +910,7 @@ edit_test_server <- function(
           tibble::tibble(
             category = "type",
             catvalue = c("Free","Statements","Alternatives","Computation","Essay","Problem"),
-            order = 1:5
+            order = 1:6
           ),
           dplyr::select(tags, category = tag, catvalue = value)
         )
