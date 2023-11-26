@@ -30,12 +30,6 @@ edit_test_ui <- function(id){
     shinydashboard::tabBox(
       side = "left", width = "100%",
       shiny::tabPanel(
-        title = shiny::span(
-          shiny::icon("chalkboard"), "Resources",
-          title = "Resources to help you test students.",
-        )
-      ),
-      shiny::tabPanel(
         title = shiny::tagList(shiny::icon("id-card"),"Definition"),
         shiny::uiOutput(ns("test_definition"))
       ),
