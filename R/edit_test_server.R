@@ -155,6 +155,7 @@ edit_test_server <- function(
       difficulty <- NULL
       code <- NULL
       tag <- NULL
+      depth <- NULL
       
       modrval <- shiny::reactiveValues()
       
@@ -849,21 +850,25 @@ edit_test_server <- function(
       # Test composition #######################################################
       
       selected_positions <- shiny::reactive({
+        
+        levnbr <- stringr::str_count(tree()$tbltree$position[1], "-")+1
+        depthlevel <- base::min(input$slctdepth, levnbr)
+        depthlevel <- base::paste0("LEV", depthlevel)
+        
         selected_positions <- filtered() |>
           dplyr::select(file) |>
-          dplyr::left_join(dplyr::select(tree()$tbltree, file, position), by = "file") |>
-          dplyr::mutate(position = purrr::map_chr(position, classR::trees_find_higher_level, y = input$slctdepth)) |>
-          dplyr::mutate(numeric_position = stringr::str_remove_all(position, "\\."))
+          dplyr::left_join(dplyr::select(tree()$tbltree, file, position, title), by = "file") |>
+          tidyr::separate(position, into = base::paste0("LEV", base::seq_len(levnbr)), sep = "-", fill = "right", remove = FALSE) |>
+          dplyr::rename(depth = dplyr::all_of(depthlevel), section = title)
         
-        tree()$tbltree |>
-          dplyr::select(position, section = text) |>
-          dplyr::mutate(numeric_position = stringr::str_remove_all(position, "\\.")) |>
-          dplyr::mutate(filtlevel = base::substr(numeric_position, input$slctdepth+1,input$slctdepth+1)) |>
-          dplyr::filter(
-            numeric_position %in% selected_positions$numeric_position,
-            filtlevel == 0
-          ) |>
-          dplyr::select(-filtlevel)
+        selected_positions |>
+          dplyr::arrange(position) |>
+          dplyr::group_by(depth) |>
+          dplyr::slice_head(n = 1) |>
+          dplyr::ungroup() |>
+          dplyr::select(depth, section) |>
+          dplyr::left_join(dplyr::select(selected_positions, depth, position, title), by = "depth") |>
+          dplyr::select(section, position)
       })
       
       composition <- shiny::reactive({
@@ -884,7 +889,6 @@ edit_test_server <- function(
             dplyr::select(document_parameters, question = file, difficulty, discrimination, guess), 
             by = "question"
           ) |>
-          dplyr::mutate(position = purrr::map_chr(position, classR::trees_find_higher_level, y = input$slctdepth)) |>
           dplyr::left_join(selected_positions(), by = "position") |>
           dplyr::mutate(
             category1 = base::get(input$slctdim1),

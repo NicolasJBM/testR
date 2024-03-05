@@ -102,7 +102,7 @@ edit_test_ui <- function(id){
               shiny::column(
                 4,
                 shiny::selectInput(
-                  ns("slctdim1"), "Fist dimension:",
+                  ns("slctdim1"), "First dimension:",
                   choices = "section", selected = "section",
                   width = "100%"
                 )
