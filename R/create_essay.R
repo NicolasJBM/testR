@@ -20,12 +20,14 @@ create_essay <- function(propositions, codes, interrogation){
   proposition <- NULL
   value <- NULL
   code <- NULL
+  retire <- NULL
   
   
   exercise <- propositions |>
     dplyr::filter(
       type == "Essay",
-      code %in% codes
+      code %in% codes,
+      retire == FALSE
     )
   
   if (nrow(exercise) == 0){

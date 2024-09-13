@@ -24,11 +24,13 @@ create_two_statements <- function(
   language <- NULL
   tmp <- NULL
   value <- NULL
+  retire <- NULL
   
   selected <- propositions |>
     dplyr::filter(
       type == "Statements",
-      document %in% documents
+      document %in% documents,
+      retire == FALSE
     )
   
   if (base::nrow(selected) > 1){

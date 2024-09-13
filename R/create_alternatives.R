@@ -24,6 +24,7 @@ create_alternatives <- function(
   language <- NULL
   value <- NULL
   code <- NULL
+  retire <- NULL
   
   interrogation <- situation[[1]]$interrogation
   correct_answer <- situation[[1]]$correct
@@ -32,7 +33,8 @@ create_alternatives <- function(
   selected <- propositions |>
     dplyr::filter(
       type == "Alternatives",
-      code %in% codes
+      code %in% codes,
+      retire == FALSE
     ) |>
     dplyr::mutate(
       value = dplyr::case_when(

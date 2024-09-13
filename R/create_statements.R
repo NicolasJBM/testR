@@ -27,11 +27,13 @@ create_statements <- function(
   document <- NULL
   language <- NULL
   value <- NULL
+  retire <- NULL
   
   selected <- propositions |>
     dplyr::filter(
       type == "Statements",
-      document %in% documents
+      document %in% documents,
+      retire == FALSE
     )
   
   truenbr <- base::min(altnbr, truenbr)

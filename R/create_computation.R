@@ -21,11 +21,13 @@ create_computation <- function(propositions, codes, altnbr, interrogation){
   language <- NULL
   value <- NULL
   code <- NULL
+  retire <- NULL
   
   selected <- propositions |>
     dplyr::filter(
       type == "Computation",
-      code %in% codes
+      code %in% codes,
+      retire == FALSE
     )
   
   if (base::nrow(selected) >= altnbr &
