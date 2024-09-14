@@ -6,6 +6,7 @@
 #' @param codes Character string. Code of the question to which the propositions are linked.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
 #' @param interrogation Character. Question asked to the student.
+#' @param exclude Character vector. Propositions which should be excluded.
 #' @return Tibble. Table containing all the information about the propositions made to the student.
 #' @importFrom dplyr bind_rows
 #' @importFrom dplyr filter
@@ -15,13 +16,14 @@
 #' @export
 
 
-create_computation <- function(propositions, codes, altnbr, interrogation){
+create_computation <- function(propositions, codes, altnbr, interrogation, exclude = NA){
   
   type <- NULL
   language <- NULL
   value <- NULL
   code <- NULL
   retire <- NULL
+  proposition <- NULL
   
   selected <- propositions |>
     dplyr::filter(
@@ -29,6 +31,10 @@ create_computation <- function(propositions, codes, altnbr, interrogation){
       code %in% codes,
       retire == FALSE
     )
+  
+  if (!base::is.na(exclude)){
+    selected <- dplyr::filter(selected, !(proposition %in% exclude))
+  }
   
   if (base::nrow(selected) >= altnbr &
       base::sum(selected$value) > 0 &

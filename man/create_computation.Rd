@@ -4,7 +4,7 @@
 \alias{create_computation}
 \title{Create a closed or open computation question}
 \usage{
-create_computation(propositions, codes, altnbr, interrogation)
+create_computation(propositions, codes, altnbr, interrogation, exclude = NA)
 }
 \arguments{
 \item{propositions}{Tibble. Table from which items (alternatives) and associated explanations are selected.}
@@ -14,6 +14,8 @@ create_computation(propositions, codes, altnbr, interrogation)
 \item{altnbr}{Integer. Number of propositions (i.e. choices) to offer to the student.}
 
 \item{interrogation}{Character. Question asked to the student.}
+
+\item{exclude}{Character vector. Propositions which should be excluded.}
 }
 \value{
 Tibble. Table containing all the information about the propositions made to the student.
