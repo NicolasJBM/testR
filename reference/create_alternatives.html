@@ -44,7 +44,14 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">create_alternatives</span><span class="op">(</span><span class="va">propositions</span>, <span class="va">codes</span>, <span class="va">situation</span>, <span class="va">altnbr</span>, <span class="va">correctnbr</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">create_alternatives</span><span class="op">(</span></span>
+<span>  <span class="va">propositions</span>,</span>
+<span>  <span class="va">codes</span>,</span>
+<span>  <span class="va">situation</span>,</span>
+<span>  <span class="va">altnbr</span>,</span>
+<span>  <span class="va">correctnbr</span>,</span>
+<span>  exclude <span class="op">=</span> <span class="cn">NA</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -70,6 +77,10 @@
 <dt id="arg-correctnbr">correctnbr<a class="anchor" aria-label="anchor" href="#arg-correctnbr"></a></dt>
 <dd><p>Integer. Number of correct propositions (i.e. choices) to offer to the student.</p></dd>
 
+
+<dt id="arg-exclude">exclude<a class="anchor" aria-label="anchor" href="#arg-exclude"></a></dt>
+<dd><p>Character vector. Propositions which should be excluded.</p></dd>
+
 </dl></div>
     <div id="value">
     <h2>Value</h2>
@@ -92,7 +103,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
 </div>
 
       </footer></div>
