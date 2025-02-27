@@ -4,7 +4,14 @@
 \alias{create_alternatives}
 \title{Create a single or multiple true or false alternative selection question}
 \usage{
-create_alternatives(propositions, codes, situation, altnbr, correctnbr)
+create_alternatives(
+  propositions,
+  codes,
+  situation,
+  altnbr,
+  correctnbr,
+  exclude = NA
+)
 }
 \arguments{
 \item{propositions}{Tibble. Table from which items (alternatives) and associated explanations are selected.}
@@ -16,6 +23,8 @@ create_alternatives(propositions, codes, situation, altnbr, correctnbr)
 \item{altnbr}{Integer. Number of propositions (i.e. choices) to offer to the student.}
 
 \item{correctnbr}{Integer. Number of correct propositions (i.e. choices) to offer to the student.}
+
+\item{exclude}{Character vector. Propositions which should be excluded.}
 }
 \value{
 Tibble. Table containing all the information about the propositions made to the student.
