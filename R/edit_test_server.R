@@ -652,13 +652,14 @@ edit_test_server <- function(
             )) |>
             tidyr::unnest(data) |>
             dplyr::ungroup() |>
-            dplyr::mutate(version_nbr = purrr::map_int(
-              version_nbr,
-              function(x) base::as.integer(base::ceiling(base::min(9,x)))
-            )) |>
             dplyr::mutate(version_nbr = purrr::map(
               version_nbr,
-              function(x) base::seq_len(x)
+              function(x) {
+                y <- base::seq_len(base::ceiling(base::as.numeric(x)))
+                nc <- base::nchar(base::max(y))
+                for (i in base::seq_len(base::length(y))) y[i] <- base::paste0(base::rep(0, nc - base::nchar(y[i])), y[i])
+                return(y)
+              }
             )) |>
             tidyr::unnest(version_nbr) |>
             base::unique()
