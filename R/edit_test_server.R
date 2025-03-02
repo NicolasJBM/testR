@@ -657,8 +657,10 @@ edit_test_server <- function(
               function(x) {
                 y <- base::seq_len(base::ceiling(base::as.numeric(x)))
                 nc <- base::nchar(base::max(y))
-                for (i in base::seq_len(base::length(y))) y[i] <- base::paste0(base::rep(0, nc - base::nchar(y[i])), y[i])
-                return(y)
+                z <- purrr::map_chr(y, function(y, nc) {
+                  base::paste(c(base::rep(0, (nc - base::nchar(y))), y), collapse = "")
+                }, nc)
+                return(z)
               }
             )) |>
             tidyr::unnest(version_nbr) |>
@@ -669,7 +671,7 @@ edit_test_server <- function(
           updatequest <- updatequest |>
             dplyr::mutate_if(base::is.factor, base::as.character) |>
             dplyr::mutate(version = base::paste0(
-              language, section, bloc, nbrinbloc, version_nbr, ".Rmd"
+              language, section, bloc,nbrinbloc, "-",version_nbr, ".Rmd"
             )) |>
             dplyr::select(-version_nbr, -version_id, -nbrinbloc) |>
             dplyr::left_join(initial_versions, by = c("question", "version")) |>
