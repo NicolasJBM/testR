@@ -74,7 +74,7 @@ export_test_to_lms <- function(
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
-      zip = TRUE,
+      zip = FALSE,
       envir = base::new.env()
     )
     

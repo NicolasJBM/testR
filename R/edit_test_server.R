@@ -671,7 +671,7 @@ edit_test_server <- function(
           updatequest <- updatequest |>
             dplyr::mutate_if(base::is.factor, base::as.character) |>
             dplyr::mutate(version = base::paste0(
-              language, section, bloc,nbrinbloc, "-",version_nbr, ".Rmd"
+              language, "-", section, "-", bloc, nbrinbloc, "-",version_nbr, ".Rmd"
             )) |>
             dplyr::select(-version_nbr, -version_id, -nbrinbloc) |>
             dplyr::left_join(initial_versions, by = c("question", "version")) |>
