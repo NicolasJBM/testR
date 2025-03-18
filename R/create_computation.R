@@ -29,12 +29,9 @@ create_computation <- function(propositions, codes, altnbr, interrogation, exclu
     dplyr::filter(
       type == "Computation",
       code %in% codes,
-      retire == FALSE
+      retire == FALSE,
+      !(proposition %in% exclude)
     )
-  
-  if (!base::is.na(exclude)){
-    selected <- dplyr::filter(selected, !(proposition %in% exclude))
-  }
   
   if (base::nrow(selected) >= altnbr &
       base::sum(selected$value) > 0 &
@@ -58,13 +55,8 @@ create_computation <- function(propositions, codes, altnbr, interrogation, exclu
     exercise <- selected
     
   } else {
-    
-    exercise <- tibble::tibble(
-      item = 1:altnbr, code = "", type = "", document = "",
-      language = "", modifications = 0,
-      proposition = "right1", value = c(1, base::rep(0, (altnbr-1))),
-      scale = "", explanation = "", keywords = ""
-    )
+    exercise <- selected
+    slctaltnbr <- base::nrow(exercise)
   }
   
   slctaltnbr <- base::nrow(exercise)
