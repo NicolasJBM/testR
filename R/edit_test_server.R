@@ -5,8 +5,7 @@
 #' @param id Character. ID of the module to connect the user interface to the appropriate server side.
 #' @param filtered Reactive. List of pre-selected documents.
 #' @param course_data Reactive. Function containing all the course data loaded with the course.
-#' @param tree Reactive. Selected tree.
-#' @param test Reactive. Selected test.
+#' @param intake Reactive. Selected intake.
 #' @param course_paths Reactive. Function containing a list of paths to the different folders and databases on local disk.
 #' @return Save the test parameters in the relevant test sub-folder in the appropriate test subfolder.
 #' @importFrom chartR draw_composition_barchart
@@ -89,7 +88,7 @@
 
 
 edit_test_server <- function(
-  id, filtered, course_data, tree, test, course_paths
+  id, filtered, course_data, intake, course_paths
 ){
   ns <- shiny::NS(id)
   shiny::moduleServer(
@@ -105,7 +104,7 @@ edit_test_server <- function(
       partial_credits <- NULL
       penalty <- NULL
       seed <- NULL
-      tree <- NULL
+      intake <- NULL
       institution <- NULL
       program <- NULL
       program_level <- NULL
@@ -156,9 +155,31 @@ edit_test_server <- function(
       code <- NULL
       tag <- NULL
       depth <- NULL
+      test <- NULL
       
       modrval <- shiny::reactiveValues()
       
+      output$testpattern <- shiny::renderUI({
+        shinyWidgets::searchInput(
+          inputId = ns("deftestpattern"),
+          label = "Preselect based on pattern:", 
+          btnSearch = shiny::icon("search"), 
+          btnReset = shiny::icon("remove"),
+          width = "100%"
+        )
+      })
+      
+      preselectedtests <- shiny::reactive({
+        shiny::req(!base::is.na(course_data()$tests))
+        shiny::req(!base::is.null(input$deftestpattern))
+        preslcttests <- base::unique(stats::na.omit(course_data()$tests$test))
+        if (base::nchar(input$deftestpattern) > 0) {
+          preslcttests <- preslcttests[stringr::str_detect(preslcttests, input$deftestpattern)]
+        }
+        preslcttests
+      })
+      
+      selecttest <- editR::selection_server("pslt", preselectedtests)
       
       
       # Preselected questions ##################################################
@@ -176,10 +197,9 @@ edit_test_server <- function(
       # Select or create a test to edit ########################################
       
       shiny::observe({
-        shiny::req(!base::is.na(tree()$course[1]))
-        modrval$tree <- tree()$course[1]
+        shiny::req(!base::is.null(selecttest()))
         modrval$test_folder <- base::paste0(
-          course_paths()$subfolders$tests, "/", test()$test[1]
+          course_paths()$subfolders$tests, "/", selecttest()
         )
         modrval$parameters_path <- base::paste0(
           modrval$test_folder, "/test_parameters.RData"
@@ -337,7 +357,7 @@ edit_test_server <- function(
       
       output$selectoldtests <- shiny::renderUI({
         shiny::req(base::length(modrval$tree_tests) > 1)
-        existing_tests <- base::setdiff(modrval$tree_tests, test()$test[1])
+        existing_tests <- base::setdiff(modrval$tree_tests, selecttest())
         shinyWidgets::multiInput(
           inputId = ns("slctpriortests"),
           label = "Select prior tests to identify untested questions",
@@ -587,7 +607,7 @@ edit_test_server <- function(
       
       output$question_organization <- rhandsontable::renderRHandsontable({
         input$update_question_organization
-        shiny::req(!base::is.na(tree()$course[1]))
+        shiny::req(!base::is.na(intake()$intake$intake[1]))
         shiny::req(base::nchar(modrval$parameters_path) > 3)
         shiny::req(base::file.exists(modrval$parameters_path))
         base::load(modrval$parameters_path)
@@ -854,13 +874,13 @@ edit_test_server <- function(
       
       selected_positions <- shiny::reactive({
         
-        levnbr <- stringr::str_count(tree()$tbltree$position[1], "-")+1
+        levnbr <- stringr::str_count(intake()$tbltree$position[1], "-")+1
         depthlevel <- base::min(input$slctdepth, levnbr)
         depthlevel <- base::paste0("LEV", depthlevel)
         
         selected_positions <- filtered() |>
           dplyr::select(file) |>
-          dplyr::left_join(dplyr::select(tree()$tbltree, file, position, title), by = "file") |>
+          dplyr::left_join(dplyr::select(intake()$tbltree, file, position, title), by = "file") |>
           tidyr::separate(position, into = base::paste0("LEV", base::seq_len(levnbr)), sep = "-", fill = "right", remove = FALSE) |>
           dplyr::rename(depth = dplyr::all_of(depthlevel), section = title)
         
@@ -875,7 +895,7 @@ edit_test_server <- function(
       })
       
       composition <- shiny::reactive({
-        shiny::req(!base::is.na(tree()$course[1]))
+        shiny::req(!base::is.na(intake()$intake$intake[1]))
         base::load(course_paths()$databases$document_parameters)
         modrval$test_parameters |>
           dplyr::group_by(section, bloc) |>
@@ -885,7 +905,7 @@ edit_test_server <- function(
           base::unique() |>
           dplyr::mutate(count = 1) |>
           dplyr::left_join(
-            dplyr::select(tree()$tbltree, question = file, position, type, dplyr::starts_with("tag_")), 
+            dplyr::select(intake()$tbltree, question = file, position, type, dplyr::starts_with("tag_")), 
             by = "question"
           ) |>
           dplyr::left_join(
@@ -901,7 +921,7 @@ edit_test_server <- function(
       })
       
       categorical_values <- shiny::reactive({
-        shiny::req(!base::is.na(tree()$course[1]))
+        shiny::req(!base::is.na(intake()$course[1]))
         base::load(course_paths()$databases$doctypes)
         base::load(course_paths()$databases$tags)
         positions <- selected_positions() |>
@@ -1089,7 +1109,7 @@ edit_test_server <- function(
       # Check ##################################################################
       
       output$selectlanguage <- shiny::renderUI({
-        test()
+        selecttest()
         input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
@@ -1116,7 +1136,7 @@ edit_test_server <- function(
       })
       
       output$selectsection <- shiny::renderUI({
-        test()
+        selecttest()
         input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
@@ -1135,7 +1155,7 @@ edit_test_server <- function(
       })
       
       output$selectbloc <- shiny::renderUI({
-        test()
+        selecttest()
         input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
@@ -1155,7 +1175,7 @@ edit_test_server <- function(
       })
       
       output$selectquestion <- shiny::renderUI({
-        test()
+        selecttest()
         input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
@@ -1185,7 +1205,7 @@ edit_test_server <- function(
       })
       
       output$selectversion <- shiny::renderUI({
-        test()
+        selecttest()
         input$refresh_organization
         shiny::isolate({
           test_parameters <- modrval$test_parameters
@@ -1214,7 +1234,7 @@ edit_test_server <- function(
       })
       
       output$editseed <- shiny::renderUI({
-        test()
+        selecttest()
         input$refresh_organization
         shiny::req(!base::is.null(input$slctversion))
         shiny::req(stringr::str_detect(modrval$test_parameters$version[1], input$slctlanguage))
@@ -1251,7 +1271,7 @@ edit_test_server <- function(
       # Display
       
       output$displayversion <- shiny::renderUI({
-        test()
+        selecttest()
         shiny::req(!base::is.null(input$slctversion))
         version_to_view <- course_data()$documents |>
           dplyr::left_join(
@@ -1394,34 +1414,6 @@ edit_test_server <- function(
         }
       })
       
-      
-      
-      # Students ###############################################################
-      
-      output$studentlist <- rhandsontable::renderRHandsontable({
-        path_to_list <- base::paste0(modrval$test_folder, "/6_students/student_list.csv")
-        shiny::req(base::file.exists(path_to_list))
-        readr::read_csv(
-          path_to_list, col_types = "ccccc",
-          locale = readr::locale(encoding = "Latin1")
-        ) |>
-          rhandsontable::rhandsontable(
-            width = "80%", rowHeaders = NULL, stretchH = "all", useTypes = FALSE
-          ) |>
-          rhandsontable::hot_context_menu(allowRowEdit = TRUE, allowColEdit = TRUE)
-      })
-      
-      shiny::observeEvent(input$savestudentlist, {
-        shiny::req(!base::is.null(input$studentlist))
-        rhandsontable::hot_to_r(input$studentlist) |>
-          readr::write_csv(
-            base::paste0(modrval$test_folder, "/6_students/student_list.csv")
-          )
-        shinyalert::shinyalert(
-          "Student list saved!",
-          type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
-        )
-      })
       
     }
   )

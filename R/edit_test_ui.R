@@ -26,7 +26,25 @@
 edit_test_ui <- function(id){
   ns <- shiny::NS(id)
   base::list(
-    
+    shiny::fluidRow(
+      shiny::column(
+        3,
+        shiny::actionButton(
+          ns("newtest"),
+          shiny::span("New test", title = ""),
+          icon = shiny::icon("wand-magic-sparkles"),
+          style = "background-color:#003366;color:#FFF;width:100%;margin-top:25px;margin-bottom:10px;border:0px;"
+        )
+      ),
+      shiny::column(
+        3,
+        shiny::uiOutput(ns("testpattern"))
+      ),
+      shiny::column(
+        6,
+        editR::selection_ui(ns("pslt"), "Test")
+      )
+    ),
     shinydashboard::tabBox(
       side = "left", width = "100%",
       shiny::tabPanel(
@@ -224,23 +242,6 @@ edit_test_ui <- function(id){
               style = "background-color:#660000;color:#FFF;width:100%;
             margin-top:10px;margin-bottom:10px;"
             )
-          )
-        )
-      ),
-      shiny::tabPanel(
-        title = shiny::tagList(shiny::icon("users"),"Students"),
-        shiny::fluidRow(
-          shiny::column(
-            2,
-            shiny::actionButton(
-              ns("savestudentlist"),
-              "Save list", icon = shiny::icon("floppy-disk"),
-              style = "color:#FFF;background-color:#006600;width:100%;margin-top:0px;margin-bottom:0px;"
-            )
-          ),
-          shiny::column(
-            10,
-            rhandsontable::rHandsontableOutput(ns("studentlist"))
           )
         )
       )
