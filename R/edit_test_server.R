@@ -83,6 +83,7 @@
 #' @importFrom tidyr nest
 #' @importFrom tidyr replace_na
 #' @importFrom tidyr unnest
+#' @importFrom fs dir_copy
 #' @export
 
 
@@ -210,20 +211,15 @@ edit_test_server <- function(
         modrval$questions_included <- stats::na.omit(
           base::unique(modrval$test_parameters$question)
         )
-        tree_tests <- base::list.files(
-          course_paths()$subfolders$tests, full.names = FALSE, recursive = FALSE
-        )
-        tree_tests <- tree_tests[!stringr::str_detect(tree_tests, "^archives$|^default$")]
-        modrval$tree_tests <- tree_tests
         base::load(course_paths()$databases$propositions)
         modrval$propositions <- propositions
         base::load(course_paths()$databases$translations)
         modrval$translations <- translations
-        answers <- base::list.files(base::paste0(
-          modrval$test_folder, "/7_answers"
-        ))
-        check_answers <- base::any(stringr::str_detect(answers, ".csv$"))
-        modrval$test_administered <- check_answers > 1
+        #answers <- base::list.files(base::paste0(
+        #  modrval$test_folder, "/7_answers"
+        #))
+        #check_answers <- base::any(stringr::str_detect(answers, ".csv$"))
+        modrval$test_administered <- FALSE
       })
       
       
@@ -356,8 +352,7 @@ edit_test_server <- function(
       # Select questions #######################################################
       
       output$selectoldtests <- shiny::renderUI({
-        shiny::req(base::length(modrval$tree_tests) > 1)
-        existing_tests <- base::setdiff(modrval$tree_tests, selecttest())
+        existing_tests <- base::setdiff(base::unique(course_data()$tests$test), selecttest())
         shinyWidgets::multiInput(
           inputId = ns("slctpriortests"),
           label = "Select prior tests to identify untested questions",
@@ -489,7 +484,7 @@ edit_test_server <- function(
           }
           
           test_parameters <- modrval$test_parameters
-          test_information <- test_parameters[1,1:12]
+          test_information <- test_parameters[1,1:11]
           languages <- stringr::str_split(
             test_information$test_languages[1], ";", simplify = TRUE
           )
@@ -653,7 +648,7 @@ edit_test_server <- function(
         } else {
           
           test_parameters <- modrval$test_parameters
-          test_information <- test_parameters[1,1:12]
+          test_information <- test_parameters[1,1:11]
           languages <- stringr::str_split(
             test_information$test_languages[1], ";", simplify = TRUE
           )
@@ -1414,6 +1409,88 @@ edit_test_server <- function(
         }
       })
       
+      
+      
+      shiny::observeEvent(input$newtest, {
+        shiny::showModal(
+          shiny::modalDialog(
+            style = "background-color:#001F3F;color:#FFF;margin-top:300px;",
+            shiny::textInput(
+              ns("new_test_name"),
+              "Name of the new test",
+              value = "NEWTEST", width = "100%"
+            ),
+            footer = tagList(
+              shiny::modalButton("Cancel"),
+              shiny::actionButton(
+                ns("add_new_test"),
+                "OK",
+                icon = shiny::icon("check"),
+                style = "background-color:#007777;color:#FFF;"
+              )
+            )
+          )
+        )
+      })
+      
+      shiny::observeEvent(input$add_new_test, {
+        all_tests <- base::unique(course_data()$tests$test)
+        main_language <- course_data()$documents$language[1]
+        shiny::removeModal()
+        if (input$new_test_name %in% all_tests){
+          shinyalert::shinyalert(
+            "This name has already been assigned",
+            'Please choose a different name.',
+            type = "error", closeOnEsc = FALSE,
+            closeOnClickOutside = TRUE
+          )
+        } else {
+          test_template <- base::paste0(
+            course_paths()$subfolders$tests, "/default"
+          )
+          new_test_folder <- base::paste0(
+            course_paths()$subfolders$tests, "/", input$new_test_name
+          )
+          fs::dir_copy(test_template, new_test_folder)
+          base::Sys.sleep(2)
+          path_param <- base::paste0(new_test_folder, "/test_parameters.RData")
+          base::load(path_param)
+          test_parameters <- test_parameters[1,] |>
+            dplyr::mutate(
+              test = input$new_test_name,
+              test_format = "quiz",
+              test_unit = "student",
+              test_assessment = "formative",
+              test_documentation = "open-book",
+              test_languages = main_language,
+              test_date = base::Sys.Date(),
+              test_duration = 0,
+              test_points = 0,
+              show_version = FALSE,
+              show_points = FALSE,
+              question = base::as.character(NA),
+              section = base::as.character(NA),
+              bloc = base::as.character(NA),
+              altnbr = base::as.integer(NA),
+              points = base::as.integer(NA),
+              partial_credits = base::as.logical(NA),
+              penalty = base::as.logical(NA),
+              version = base::as.character(NA),
+              seed = base::as.integer(NA)
+            )
+          
+          base::save(test_parameters, file = path_param)
+          shinyalert::shinyalert(
+            "Test created",
+            base::paste0(
+              'The test ',
+              input$new_test_name,
+              ' has been created. Update documents and reload the course to to select it.'
+            ),
+            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+          )
+        }
+      })
       
     }
   )
