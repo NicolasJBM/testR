@@ -1437,7 +1437,7 @@ edit_test_server <- function(
         all_tests <- base::unique(course_data()$tests$test)
         main_language <- course_data()$documents$language[1]
         shiny::removeModal()
-        if (input$new_test_name %in% all_tests){
+        if (base::toupper(input$new_test_name) %in% all_tests){
           shinyalert::shinyalert(
             "This name has already been assigned",
             'Please choose a different name.',
@@ -1449,7 +1449,7 @@ edit_test_server <- function(
             course_paths()$subfolders$tests, "/default"
           )
           new_test_folder <- base::paste0(
-            course_paths()$subfolders$tests, "/", input$new_test_name
+            course_paths()$subfolders$tests, "/", base::toupper(input$new_test_name)
           )
           fs::dir_copy(test_template, new_test_folder)
           base::Sys.sleep(2)
@@ -1457,7 +1457,7 @@ edit_test_server <- function(
           base::load(path_param)
           test_parameters <- test_parameters[1,] |>
             dplyr::mutate(
-              test = input$new_test_name,
+              test = base::toupper(input$new_test_name),
               test_format = "quiz",
               test_unit = "student",
               test_assessment = "formative",
@@ -1484,7 +1484,7 @@ edit_test_server <- function(
             "Test created",
             base::paste0(
               'The test ',
-              input$new_test_name,
+              base::toupper(input$new_test_name),
               ' has been created. Update documents and reload the course to to select it.'
             ),
             type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
