@@ -215,11 +215,6 @@ edit_test_server <- function(
         modrval$propositions <- propositions
         base::load(course_paths()$databases$translations)
         modrval$translations <- translations
-        #answers <- base::list.files(base::paste0(
-        #  modrval$test_folder, "/7_answers"
-        #))
-        #check_answers <- base::any(stringr::str_detect(answers, ".csv$"))
-        modrval$test_administered <- FALSE
       })
       
       
@@ -322,7 +317,6 @@ edit_test_server <- function(
       shiny::observeEvent(input$save_test_def, {
         test_parameters <- modrval$test_parameters |>
           dplyr::mutate(
-            tree = modrval$test_parameters$tree[1],
             test = modrval$test_parameters$test[1],
             test_format = input$def_test_format,
             test_unit = input$def_test_unit,
@@ -468,132 +462,124 @@ edit_test_server <- function(
       })
       
       shiny::observeEvent(input$applyselection, {
-        if (modrval$test_administered){
-          shinyalert::shinyalert(
-            title = "Changes not allowed!",
-            text = "You cannot change the selection of questions when the test has been administered.",
-            type = "error", closeOnEsc = FALSE, closeOnClickOutside = FALSE,
-            showCancelButton = TRUE, showConfirmButton = FALSE
-          )
-        } else {
-          if (!base::is.null(input$slctuntested)){
-            selection <- input$slctuntested
-          } else selection <- base::character(0)
-          if (!base::is.null(input$slcttested)){
-            selection <- c(selection, input$slcttested)
-          }
-          
-          test_parameters <- modrval$test_parameters
-          test_information <- test_parameters[1,1:11]
-          languages <- stringr::str_split(
-            test_information$test_languages[1], ";", simplify = TRUE
-          )
-          
-          remove_questions <- base::setdiff(
-            base::unique(test_parameters$question),
-            selection
-          )
-          keep_questions <- base::intersect(
-            base::unique(test_parameters$question),
-            selection
-          )
-          add_questions <- base::setdiff(
-            selection,
-            base::unique(test_parameters$question)
-          )
-          
-          test_parameters <- test_parameters |>
-            dplyr::filter(question %in% keep_questions)
-          
-          available_blocs <- base::setdiff(
-            base::toupper(letters), base::unique(test_parameters$bloc)
-          )
-          
-          add <- tibble::tibble(
-            question = add_questions,
-            section = "Z",
-            bloc = available_blocs[base::seq_len(base::length(add_questions))],
-            altnbr = 5,
-            points = 0,
-            partial_credits = 0,
-            penalty = 0,
-            version = stringr::str_extract(add_questions, "(?<=_)(.*)(?=.Rmd)")
-          ) |>
-            dplyr::mutate(
-              version = base::paste0(version, section, bloc, 1, 1, ".Rmd"),
-              seed = base::ceiling(stats::runif(base::length(add_questions)) * 10000)
-            )
-          
-          add <- dplyr::bind_cols(test_information, add)
-          
-          test_parameters <- dplyr::bind_rows(test_parameters, add) |>
-            stats::na.omit()
-          
-          # Manage files
-          questinfold <- base::list.files(base::paste0(
-            modrval$test_folder, "/1_questions/"
-          ))
-          slctedquest <- base::unique(test_parameters$question)
-          rmvquest <- base::setdiff(questinfold, slctedquest)
-          
-          for (q in rmvquest){
-            for (l in languages){
-              file <- base::paste0(
-                modrval$test_folder, "/1_questions/",
-                stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
-              )
-              if (base::file.exists(file)) base::file.remove(file)
-            }
-          }
-          
-          for (q in slctedquest){
-            for (l in languages){
-              file <- stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
-              origin <- base::paste0(
-                course_paths()$subfolders$original, "/", file
-              )
-              if (!base::file.exists(origin)){
-                origin <- base::paste0(
-                  course_paths()$subfolders$translated, "/", file
-                )
-              }
-              destination <- base::paste0(
-                modrval$test_folder, "/1_questions/", file
-              )
-              if (base::file.exists(origin) & !base::file.exists(destination)){
-                base::file.copy(
-                  from = origin,
-                  to = destination
-                )
-              }
-            }
-          }
-          
-          if (base::nrow(test_parameters) == 0){
-            test_parameters <- test_information |>
-              dplyr::mutate(
-                question = base::as.character(NA),
-                section = base::as.character(NA),
-                bloc = base::as.character(NA),
-                altnbr = base::as.integer(NA),
-                points = base::as.integer(NA),
-                partial_credits = base::as.logical(NA),
-                penalty = base::as.logical(NA),
-                version = base::as.character(NA),
-                seed = base::as.integer(NA)
-              )
-          }
-          
-          modrval$test_parameters <- test_parameters
-          base::save(test_parameters, file = modrval$parameters_path)
-          
-          shinyalert::shinyalert(
-            title = "Selection of questions updated!",
-            text = "Unselected questions have been removed and additional questions added to your test parameters.",
-            type = "success", closeOnEsc = FALSE, closeOnClickOutside = FALSE,
-            showCancelButton = FALSE, showConfirmButton = TRUE
-          )
+        if (!base::is.null(input$slctuntested)){
+          selection <- input$slctuntested
+        } else selection <- base::character(0)
+        if (!base::is.null(input$slcttested)){
+          selection <- c(selection, input$slcttested)
         }
+        
+        test_parameters <- modrval$test_parameters
+        test_information <- test_parameters[1,1:11]
+        
+        languages <- stringr::str_split(
+          test_information$test_languages[1], ";", simplify = TRUE
+        )
+        
+        remove_questions <- base::setdiff(
+          base::unique(test_parameters$question),
+          selection
+        )
+        keep_questions <- base::intersect(
+          base::unique(test_parameters$question),
+          selection
+        )
+        add_questions <- base::setdiff(
+          selection,
+          base::unique(test_parameters$question)
+        )
+        
+        test_parameters <- test_parameters |>
+          dplyr::filter(question %in% keep_questions)
+        
+        available_blocs <- base::setdiff(
+          base::toupper(letters), base::unique(test_parameters$bloc)
+        )
+        
+        add <- tibble::tibble(
+          question = add_questions,
+          section = "Z",
+          bloc = available_blocs[base::seq_len(base::length(add_questions))],
+          altnbr = 5,
+          points = 0,
+          partial_credits = 0,
+          penalty = 0,
+          version = stringr::str_extract(add_questions, "(?<=_)(.*)(?=.Rmd)")
+        ) |>
+          dplyr::mutate(
+            version = base::paste0(version, section, bloc, 1, 1, ".Rmd"),
+            seed = base::ceiling(stats::runif(base::length(add_questions)) * 10000)
+          )
+        
+        add <- dplyr::bind_cols(test_information, add)
+        
+        test_parameters <- dplyr::bind_rows(test_parameters, add) |>
+          stats::na.omit()
+        
+        # Manage files
+        questinfold <- base::list.files(base::paste0(
+          modrval$test_folder, "/1_questions/"
+        ))
+        slctedquest <- base::unique(test_parameters$question)
+        rmvquest <- base::setdiff(questinfold, slctedquest)
+        
+        for (q in rmvquest){
+          for (l in languages){
+            file <- base::paste0(
+              modrval$test_folder, "/1_questions/",
+              stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
+            )
+            if (base::file.exists(file)) base::file.remove(file)
+          }
+        }
+        
+        for (q in slctedquest){
+          for (l in languages){
+            file <- stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
+            origin <- base::paste0(
+              course_paths()$subfolders$original, "/", file
+            )
+            if (!base::file.exists(origin)){
+              origin <- base::paste0(
+                course_paths()$subfolders$translated, "/", file
+              )
+            }
+            destination <- base::paste0(
+              modrval$test_folder, "/1_questions/", file
+            )
+            if (base::file.exists(origin) & !base::file.exists(destination)){
+              base::file.copy(
+                from = origin,
+                to = destination
+              )
+            }
+          }
+        }
+        
+        if (base::nrow(test_parameters) == 0){
+          test_parameters <- test_information |>
+            dplyr::mutate(
+              question = base::as.character(NA),
+              section = base::as.character(NA),
+              bloc = base::as.character(NA),
+              altnbr = base::as.integer(NA),
+              points = base::as.integer(NA),
+              partial_credits = base::as.logical(NA),
+              penalty = base::as.logical(NA),
+              version = base::as.character(NA),
+              seed = base::as.integer(NA)
+            )
+        }
+        
+        modrval$test_parameters <- test_parameters
+        base::save(test_parameters, file = modrval$parameters_path)
+        
+        shinyalert::shinyalert(
+          title = "Selection of questions updated!",
+          text = "Unselected questions have been removed and additional questions added to your test parameters.",
+          type = "success", closeOnEsc = FALSE, closeOnClickOutside = FALSE,
+          showCancelButton = FALSE, showConfirmButton = TRUE
+        )
       })
       
       
@@ -636,124 +622,114 @@ edit_test_server <- function(
       
       shiny::observeEvent(input$save_question_organization, {
         shiny::req(!base::is.null(input$question_organization))
-        if (modrval$test_administered){
-          
-          shinyalert::shinyalert(
-            title = "Changes not allowed",
-            text = "You cannot change the organization of questions when the test has been administered.",
-            type = "error", closeOnEsc = FALSE, closeOnClickOutside = FALSE,
-            showCancelButton = TRUE, showConfirmButton = FALSE
-          )
-          
-        } else {
-          
-          test_parameters <- modrval$test_parameters
-          test_information <- test_parameters[1,1:11]
-          languages <- stringr::str_split(
-            test_information$test_languages[1], ";", simplify = TRUE
-          )
-          
-          initial_versions <- test_parameters |>
-            dplyr::select(question, version, seed) |>
-            base::unique()
-          
-          updatequest <- rhandsontable::hot_to_r(input$question_organization) |>
-            dplyr::select(-title, -type) |>
-            dplyr::group_by(section, bloc) |>
-            tidyr::nest() |>
-            dplyr::mutate(data = purrr::map(
-              data,
-              function(x) tibble::rowid_to_column(as.data.frame(x), "nbrinbloc")
-            )) |>
-            tidyr::unnest(data) |>
-            dplyr::ungroup() |>
-            dplyr::mutate(version_nbr = purrr::map(
-              version_nbr,
-              function(x) {
-                y <- base::seq_len(base::ceiling(base::as.numeric(x)))
-                nc <- base::nchar(base::max(y))
-                z <- purrr::map_chr(y, function(y, nc) {
-                  base::paste(c(base::rep(0, (nc - base::nchar(y))), y), collapse = "")
-                }, nc)
-                return(z)
-              }
-            )) |>
-            tidyr::unnest(version_nbr) |>
-            base::unique()
-          
-          shiny::req(base::nrow(updatequest) > 0)
-          
-          updatequest <- updatequest |>
-            dplyr::mutate_if(base::is.factor, base::as.character) |>
-            dplyr::mutate(version = base::paste0(
-              language, "-", section, "-", bloc, nbrinbloc, "-",version_nbr, ".Rmd"
-            )) |>
-            dplyr::select(-version_nbr, -version_id, -nbrinbloc) |>
-            dplyr::left_join(initial_versions, by = c("question", "version")) |>
-            dplyr::mutate(
-              seed = purrr::map_dbl(seed, function(x){
-                if (base::is.na(x)) base::ceiling(stats::runif(1)*10000) else x
-              })
-            ) |>
-            dplyr::mutate(seed = base::as.integer(seed))
-          
-          updatequest <- dplyr::bind_cols(test_information, updatequest) |>
-            dplyr::select(base::names(test_parameters))
-          
-          test_parameters <- updatequest
-          
-          base::save(test_parameters, file = modrval$parameters_path)
-          
-          for (i in base::seq_len(base::nrow(test_parameters))){
-            for (l in languages){
-              q <- test_parameters$question[i]
-              q <- stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
-              q <- base::paste0(modrval$test_folder, "/1_questions/", q)
-              v <- test_parameters$version[i]
-              v <- stringr::str_replace(v, "^..", l)
-              v <- base::paste0(modrval$test_folder, "/2_versions/", v)
-              lines <- base::readLines(q)
-              if (!base::any(stringr::str_detect(
-                  lines,
-                  "exextra\\[type\\]:[ ]{0,3}Free"
-                ))){
-                vid <- stringr::str_replace(test_parameters$version[i], "^..", l)
-                lines[2] <- base::paste0('versionid <- "', vid,'"')
-              }
-              base::writeLines(lines, v, useBytes = TRUE)
+        
+        
+        test_parameters <- modrval$test_parameters
+        test_information <- test_parameters[1,1:11]
+        languages <- stringr::str_split(
+          test_information$test_languages[1], ";", simplify = TRUE
+        )
+        
+        initial_versions <- test_parameters |>
+          dplyr::select(question, version, seed) |>
+          base::unique()
+        
+        updatequest <- rhandsontable::hot_to_r(input$question_organization) |>
+          dplyr::select(-title, -type) |>
+          dplyr::group_by(section, bloc) |>
+          tidyr::nest() |>
+          dplyr::mutate(data = purrr::map(
+            data,
+            function(x) tibble::rowid_to_column(as.data.frame(x), "nbrinbloc")
+          )) |>
+          tidyr::unnest(data) |>
+          dplyr::ungroup() |>
+          dplyr::mutate(version_nbr = purrr::map(
+            version_nbr,
+            function(x) {
+              y <- base::seq_len(base::ceiling(base::as.numeric(x)))
+              nc <- base::nchar(base::max(y))
+              z <- purrr::map_chr(y, function(y, nc) {
+                base::paste(c(base::rep(0, (nc - base::nchar(y))), y), collapse = "")
+              }, nc)
+              return(z)
             }
-          }
-          
-          modrval$test_parameters <- test_parameters
-          
-          all_versions <- base::list.files(base::paste0(
-            modrval$test_folder, "/2_versions"
-          ), full.names = FALSE)
-          
-          all_expected <- base::character(0)
+          )) |>
+          tidyr::unnest(version_nbr) |>
+          base::unique()
+        
+        shiny::req(base::nrow(updatequest) > 0)
+        
+        updatequest <- updatequest |>
+          dplyr::mutate_if(base::is.factor, base::as.character) |>
+          dplyr::mutate(version = base::paste0(
+            language, "-", section, "-", bloc, nbrinbloc, "-",version_nbr, ".Rmd"
+          )) |>
+          dplyr::select(-version_nbr, -version_id, -nbrinbloc) |>
+          dplyr::left_join(initial_versions, by = c("question", "version")) |>
+          dplyr::mutate(
+            seed = purrr::map_dbl(seed, function(x){
+              if (base::is.na(x)) base::ceiling(stats::runif(1)*10000) else x
+            })
+          ) |>
+          dplyr::mutate(seed = base::as.integer(seed))
+        
+        updatequest <- dplyr::bind_cols(test_information, updatequest) |>
+          dplyr::select(base::names(test_parameters))
+        
+        test_parameters <- updatequest
+        
+        base::save(test_parameters, file = modrval$parameters_path)
+        
+        for (i in base::seq_len(base::nrow(test_parameters))){
           for (l in languages){
-            all_expected <- c(
-              all_expected,
-              stringr::str_replace_all(
-                base::unique(test_parameters$version), "^..", l
-              )
+            q <- test_parameters$question[i]
+            q <- stringr::str_replace(q, "_...Rmd$", base::paste0("_", l, ".Rmd"))
+            q <- base::paste0(modrval$test_folder, "/1_questions/", q)
+            v <- test_parameters$version[i]
+            v <- stringr::str_replace(v, "^..", l)
+            v <- base::paste0(modrval$test_folder, "/2_versions/", v)
+            lines <- base::readLines(q)
+            if (!base::any(stringr::str_detect(
+              lines,
+              "exextra\\[type\\]:[ ]{0,3}Free"
+            ))){
+              vid <- stringr::str_replace(test_parameters$version[i], "^..", l)
+              lines[2] <- base::paste0('versionid <- "', vid,'"')
+            }
+            base::writeLines(lines, v, useBytes = TRUE)
+          }
+        }
+        
+        modrval$test_parameters <- test_parameters
+        
+        all_versions <- base::list.files(base::paste0(
+          modrval$test_folder, "/2_versions"
+        ), full.names = FALSE)
+        
+        all_expected <- base::character(0)
+        for (l in languages){
+          all_expected <- c(
+            all_expected,
+            stringr::str_replace_all(
+              base::unique(test_parameters$version), "^..", l
             )
-          }
-          
-          remove <- base::setdiff(all_versions, all_expected)
-          if (base::length(remove) > 0){
-            base::file.remove(base::paste(
-              base::paste0(modrval$test_folder, "/2_versions/"),
-              remove, sep = ""
-            ))
-          }
-          
-          shinyalert::shinyalert(
-            title = "Questions and versions updated!",
-            text = "Check all the versions of all the question before producing the test.",
-            type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
           )
         }
+        
+        remove <- base::setdiff(all_versions, all_expected)
+        if (base::length(remove) > 0){
+          base::file.remove(base::paste(
+            base::paste0(modrval$test_folder, "/2_versions/"),
+            remove, sep = ""
+          ))
+        }
+        
+        shinyalert::shinyalert(
+          title = "Questions and versions updated!",
+          text = "Check all the versions of all the question before producing the test.",
+          type = "success", closeOnEsc = FALSE, closeOnClickOutside = TRUE
+        )
       })
       
       output$test_statistics <- shiny::renderUI({
@@ -1462,7 +1438,7 @@ edit_test_server <- function(
               test_unit = "student",
               test_assessment = "formative",
               test_documentation = "open-book",
-              test_languages = main_language,
+              test_languages = "US",
               test_date = base::Sys.Date(),
               test_duration = 0,
               test_points = 0,

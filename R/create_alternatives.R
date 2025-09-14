@@ -47,6 +47,8 @@ create_alternatives <- function(
       )
     )
   
+  maxcorrect <- base::nrow(dplyr::filter(selected, value == 1))
+  correctnbr <- base::min(maxcorrect, correctnbr)
   correctnbr <- base::min(altnbr, correctnbr)
   incorrectnbr <- altnbr - correctnbr
   
