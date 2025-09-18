@@ -7,7 +7,7 @@
 #' @param situation List. The entry selected as the situation which determines which items are true.
 #' @param altnbr Integer. Number of propositions (i.e. choices) to offer to the student.
 #' @param correctnbr Integer. Number of correct propositions (i.e. choices) to offer to the student.
-#' @param exclude Character vector. Propositions which should be excluded.
+#' @param exclude Character vector. Items which should be excluded.
 #' @return Tibble. Table containing all the information about the propositions made to the student.
 #' @importFrom dplyr bind_rows
 #' @importFrom dplyr case_when
@@ -37,7 +37,7 @@ create_alternatives <- function(
       type == "Alternatives",
       code %in% codes,
       retire == FALSE,
-      !(keywords %in% exclude)
+      !(item %in% exclude)
     ) |>
     dplyr::mutate(
       value = dplyr::case_when(

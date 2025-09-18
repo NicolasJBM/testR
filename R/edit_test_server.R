@@ -1009,53 +1009,44 @@ edit_test_server <- function(
       })
       
       shiny::observeEvent(input$savetestquestion, {
-        if (modrval$test_administered){
-          shinyalert::shinyalert(
-            title = "Changes not allowed",
-            text = "You cannot change the questions when the test has been administered.",
-            type = "error", closeOnEsc = FALSE, closeOnClickOutside = FALSE,
-            showCancelButton = TRUE, showConfirmButton = FALSE
+        selected_question <- shiny::isolate({ question_to_edit() })
+        edited_question <- shiny::isolate({ input$editedtestquest })
+        selected_language <- shiny::isolate({ input$slcteditlanguage })
+        shiny::req(!base::is.null(selected_question))
+        shiny::req(!base::is.null(edited_question))
+        shiny::req(!base::is.null(selected_language))
+        base::writeLines(
+          edited_question,
+          base::paste0(modrval$test_folder, "/1_questions/", selected_question),
+          useBytes = TRUE
+        )
+        versions_to_change <- modrval$test_parameters |>
+          dplyr::select(question, version) |>
+          dplyr::mutate(
+            question = stringr::str_replace_all(
+              question, "_...Rmd$", base::paste0("_", selected_language, ".Rmd")
+            ),
+            version = stringr::str_replace_all(version, "^..", selected_language)
+          ) |>
+          dplyr::filter(question == question_to_edit()) |>
+          dplyr::mutate(
+            question_path = base::paste0(modrval$test_folder, "/1_questions/", question),
+            version_path = base::paste0(modrval$test_folder, "/2_versions/", version)
           )
-        } else {
-          selected_question <- shiny::isolate({ question_to_edit() })
-          edited_question <- shiny::isolate({ input$editedtestquest })
-          selected_language <- shiny::isolate({ input$slcteditlanguage })
-          shiny::req(!base::is.null(selected_question))
-          shiny::req(!base::is.null(edited_question))
-          shiny::req(!base::is.null(selected_language))
-          base::writeLines(
-            edited_question,
-            base::paste0(modrval$test_folder, "/1_questions/", selected_question),
-            useBytes = TRUE
-          )
-          versions_to_change <- modrval$test_parameters |>
-            dplyr::select(question, version) |>
-            dplyr::mutate(
-              question = stringr::str_replace_all(
-                question, "_...Rmd$", base::paste0("_", selected_language, ".Rmd")
-              ),
-              version = stringr::str_replace_all(version, "^..", selected_language)
-            ) |>
-            dplyr::filter(question == question_to_edit()) |>
-            dplyr::mutate(
-              question_path = base::paste0(modrval$test_folder, "/1_questions/", question),
-              version_path = base::paste0(modrval$test_folder, "/2_versions/", version)
-            )
-            
-          for (i in base::seq_len(base::nrow(versions_to_change))){
-            lines <- base::readLines(versions_to_change$question_path[i])
-            if (!base::any(stringr::str_detect(
-              lines,
-              "exextra\\[type\\]:[ ]{0,3}Free"
-            ))){
-              lines[2] <- base::paste0(
-                'versionid <- "', versions_to_change$version[i],'"'
-              )
-            }
-            base::writeLines(
-              lines, versions_to_change$version_path[i], useBytes = TRUE
+        
+        for (i in base::seq_len(base::nrow(versions_to_change))){
+          lines <- base::readLines(versions_to_change$question_path[i])
+          if (!base::any(stringr::str_detect(
+            lines,
+            "exextra\\[type\\]:[ ]{0,3}Free"
+          ))){
+            lines[2] <- base::paste0(
+              'versionid <- "', versions_to_change$version[i],'"'
             )
           }
+          base::writeLines(
+            lines, versions_to_change$version_path[i], useBytes = TRUE
+          )
         }
       })
       
@@ -1219,24 +1210,15 @@ edit_test_server <- function(
       
       shiny::observeEvent(input$savenewseed, {
         shiny::req(!base::is.null(input$newseed))
-        if (modrval$test_administered){
-          shinyalert::shinyalert(
-            title = "Changes not allowed",
-            text = "You cannot change a seed when the test has been administered.",
-            type = "error", closeOnEsc = FALSE, closeOnClickOutside = FALSE,
-            showCancelButton = TRUE, showConfirmButton = FALSE
-          )
-        } else {
-          test_parameters <- modrval$test_parameters |>
-            dplyr::mutate(
-              seed = dplyr::case_when(
-                version == input$slctversion ~ input$newseed,
-                TRUE ~ seed
-              )
+        test_parameters <- modrval$test_parameters |>
+          dplyr::mutate(
+            seed = dplyr::case_when(
+              version == input$slctversion ~ input$newseed,
+              TRUE ~ seed
             )
-          base::save(test_parameters, file = modrval$parameters_path)
-          modrval$test_parameters <- test_parameters
-        }
+          )
+        base::save(test_parameters, file = modrval$parameters_path)
+        modrval$test_parameters <- test_parameters
       })
       
       # Display

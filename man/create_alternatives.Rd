@@ -24,7 +24,7 @@ create_alternatives(
 
 \item{correctnbr}{Integer. Number of correct propositions (i.e. choices) to offer to the student.}
 
-\item{exclude}{Character vector. Propositions which should be excluded.}
+\item{exclude}{Character vector. Items which should be excluded.}
 }
 \value{
 Tibble. Table containing all the information about the propositions made to the student.
