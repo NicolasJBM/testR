@@ -10,7 +10,9 @@ export_test_to_lms(
   translations,
   exam_folder,
   lms = "Moodle",
-  language
+  language,
+  section = "A",
+  bloc = "A"
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ export_test_to_lms(
 \item{lms}{Character. Name of the learning management system for which the export should be generated.}
 
 \item{language}{Character. ISO2 code of the printed language.}
+
+\item{section}{Character. Name of the section.}
+
+\item{bloc}{Character. Name of the bloc.}
 }
 \description{
 Function creating tests to be uploaded on various Learning Management Systems.

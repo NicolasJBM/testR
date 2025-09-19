@@ -8,6 +8,8 @@
 #' @param exam_folder Character. Path to the exam folder.
 #' @param lms Character. Name of the learning management system for which the export should be generated.
 #' @param language Character. ISO2 code of the printed language.
+#' @param section Character. Name of the section.
+#' @param bloc Character. Name of the bloc.
 #' @importFrom dplyr arrange
 #' @importFrom dplyr group_by
 #' @importFrom dplyr select
@@ -29,11 +31,10 @@
 
 export_test_to_lms <- function(
     test_parameters, propositions, translations,
-    exam_folder, lms = 'Moodle', language
+    exam_folder, lms = 'Moodle', language,
+    section = "A", bloc = "A"
 ){
   
-  section <- NULL
-  bloc <- NULL
   points <- NULL
   
   testname <- test_parameters$test[1]
@@ -57,9 +58,14 @@ export_test_to_lms <- function(
   record_solution <- TRUE
   docformat <- "html"
   
-  filename <- base::paste0(lms, "_", language)
+  filename <- base::paste0(lms, "_", language, "_", section, "_", bloc)
   
-  base::print(base::paste0("Export for ", lms, " in ", language, "."))
+  base::print(base::paste0(
+    "Generating section ", section,
+    " bloc ", bloc,
+    " in ", language,
+    " for ", lms,"..."
+  ))
   
   if (lms == "Moodle"){
     

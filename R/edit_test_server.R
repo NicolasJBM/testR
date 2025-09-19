@@ -1323,8 +1323,14 @@ edit_test_server <- function(
         )
         shiny::req(base::length(languages)>0)
         shiny::req(base::length(input$slctlms)>0)
-        pubnbr <- base::length(languages)*base::length(input$slctlms)
+        
+        files <- test_parameters |>
+          dplyr::select(section, bloc) |>
+          base::unique()
+        
+        pubnbr <- base::length(languages)*base::length(input$slctlms)*base::nrow(files)
         pgr <- 0
+        
         shinybusy::show_modal_progress_line(
           value = pgr, text = "Starting the publication progress"
         )
@@ -1332,18 +1338,31 @@ edit_test_server <- function(
           test_parameters <- test_parameters |>
             dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
           for (lms in input$slctlms){
-            shinybusy::update_modal_progress(
-              value = pgr,
-              text = base::paste0("Generating ", l, " files for ", lms,"...")
-            )
-            pgr <- pgr+1/pubnbr
-            testR::export_test_to_lms(
-              test_parameters,
-              modrval$propositions,
-              modrval$translations,
-              modrval$test_folder,
-              lms, l
-            )
+            for (f in base::seq_len(base::nrow(files))){
+              sub_test_parameters <- test_parameters |>
+                dplyr::filter(section == files$section[f], bloc == files$bloc[f])
+              
+              shinybusy::update_modal_progress(
+                value = pgr,
+                text = base::paste0(
+                  "Generating section ", files$section[f],
+                  " bloc ", files$bloc[f],
+                  " in ", l,
+                  " for ", lms,"..."
+                )
+              )
+              pgr <- pgr+1/pubnbr
+              testR::export_test_to_lms(
+                sub_test_parameters,
+                modrval$propositions,
+                modrval$translations,
+                modrval$test_folder,
+                lms,
+                l,
+                files$section[f],
+                files$bloc[f]
+              )
+            }
           }
         }
         shinybusy::remove_modal_spinner()
@@ -1366,8 +1385,6 @@ edit_test_server <- function(
           }
         }
       })
-      
-      
       
       shiny::observeEvent(input$newtest, {
         shiny::showModal(

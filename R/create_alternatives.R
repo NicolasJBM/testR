@@ -27,6 +27,7 @@ create_alternatives <- function(
   code <- NULL
   retire <- NULL
   keywords <- NULL
+  item <- NULL
   
   interrogation <- situation[[1]]$interrogation
   correct_answer <- situation[[1]]$correct
