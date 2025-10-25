@@ -3,6 +3,7 @@
 export(create_alternatives)
 export(create_computation)
 export(create_essay)
+export(create_problem)
 export(create_statements)
 export(create_two_statements)
 export(edit_test_server)
