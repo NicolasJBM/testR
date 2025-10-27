@@ -25,7 +25,7 @@ create_problem <- function(propositions, codes, interrogation){
   
   exercise <- propositions |>
     dplyr::filter(
-      type == "Essay",
+      type == "Problem",
       code %in% codes,
       retire == FALSE
     )
