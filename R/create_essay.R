@@ -39,11 +39,13 @@ create_essay <- function(propositions, codes, interrogation){
     )
   }
   
+  extendedleters <- c(letters, base::c(base::t(base::outer(letters, letters, paste, sep = ""))))
+  
   exercise <- exercise |>
     dplyr::arrange(proposition) |>
     dplyr::mutate(
       number = base::seq_len(base::nrow(exercise)),
-      letter = base::letters[base::seq_len(base::nrow(exercise))],
+      letter = extendedleters[base::seq_len(base::nrow(exercise))],
       correct = value,
       interrogation = interrogation
     )
