@@ -67,6 +67,7 @@
 #' @importFrom shinyWidgets multiInput
 #' @importFrom shinyWidgets radioGroupButtons
 #' @importFrom shinyWidgets switchInput
+#' @importFrom shinyWidgets checkboxGroupButtons
 #' @importFrom shinyalert shinyalert
 #' @importFrom shinybusy remove_modal_spinner
 #' @importFrom shinybusy show_modal_progress_line
@@ -416,6 +417,8 @@ edit_test_server <- function(
         )
       })
       
+      
+      
       display_list <- shiny::reactive({
         shiny::req(!base::is.null(course_data()$documents))
         shiny::req(base::length(questions()) > 1)
@@ -425,7 +428,7 @@ edit_test_server <- function(
           modrval$questions_preselected,
           questorder
         ))
-        questorder <- base::union(questorder, add_selection)
+        questorder <- base::union(add_selection, questorder)
         sampled_questions <- course_data()$documents |>
           dplyr::filter(file %in% questorder) |>
           dplyr::arrange(base::match(file, questorder))
@@ -439,15 +442,21 @@ edit_test_server <- function(
         to_display
       })
       
+      
+      
       question_to_display <- editR::selection_server(
         "slctquest2disp", display_list
       )
+      
+      
       
       output$viewquestionstats <- shiny::renderUI({
         shiny::req(!base::is.null(question_to_display()))
         shiny::req(question_to_display() != "")
         editR::make_infobox(course_data, question_to_display(), "results")
       })
+      
+      
       
       output$viewquestion <- shiny::renderUI({
         shiny::req(!base::is.null(questions()))
@@ -460,6 +469,11 @@ edit_test_server <- function(
         )
         editR::display_question(to_view, course_paths)
       })
+      
+      
+      
+      
+      
       
       shiny::observeEvent(input$applyselection, {
         if (!base::is.null(input$slctuntested)){
@@ -1250,6 +1264,25 @@ edit_test_server <- function(
       
       # Publish ################################################################
       
+      output$selectsectionexport <- shiny::renderUI({
+        selecttest()
+        input$refresh_organization
+        shiny::isolate({
+          test_parameters <- modrval$test_parameters
+        })
+        shiny::req(!base::is.null(test_parameters))
+        shiny::req(base::nrow(test_parameters) > 0)
+        existing_sections <- base::unique(test_parameters$section)
+        shinyWidgets::checkboxGroupButtons(
+          inputId = ns("slctsectionexport"),
+          label = "Sections exported",
+          choices = existing_sections,
+          selected = NA,
+          status = "info", size = "sm",
+          checkIcon = base::list(yes = shiny::icon("check"))
+        )
+      })
+      
       output$slctpdftemplate <- shiny::renderUI({
         shiny::req(!base::is.null(input$slctfileformat))
         if ("PDF" %in% input$slctfileformat){
@@ -1268,7 +1301,8 @@ edit_test_server <- function(
       })
       
       shiny::observeEvent(input$export_to_file, {
-        test_parameters <- modrval$test_parameters
+        test_parameters <- modrval$test_parameters |>
+          dplyr::filter(section %in% input$slctsectionexport)
         languages <- stringr::str_split(
           test_parameters$test_languages[1], ";", simplify = TRUE
         )
@@ -1317,7 +1351,8 @@ edit_test_server <- function(
       })
       
       shiny::observeEvent(input$export_to_lms, {
-        test_parameters <- modrval$test_parameters
+        test_parameters <- modrval$test_parameters |>
+          dplyr::filter(section %in% input$slctsectionexport)
         languages <- stringr::str_split(
           test_parameters$test_languages[1], ";", simplify = TRUE
         )

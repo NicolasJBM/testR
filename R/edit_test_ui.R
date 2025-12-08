@@ -204,6 +204,9 @@ edit_test_ui <- function(id){
           ),
           shiny::column(
             3,
+            shiny::tags$h4("Define scope of exports"),
+            shiny::uiOutput(ns("selectsectionexport")),
+            shiny::tags$hr(),
             shiny::tags$h4("Export questions or tests to files"),
             shinyWidgets::checkboxGroupButtons(
               inputId = ns("slctfileformat"),label = "File format:", 
