@@ -77,6 +77,7 @@ export_test_to_lms <- function(
       edir = docdir,
       tdir = tmpdir,
       sdir = tmpdir,
+      stitle = question_list$bloc,
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
