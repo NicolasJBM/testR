@@ -161,24 +161,9 @@ edit_test_server <- function(
       
       modrval <- shiny::reactiveValues()
       
-      output$testpattern <- shiny::renderUI({
-        shinyWidgets::searchInput(
-          inputId = ns("deftestpattern"),
-          label = "Preselect based on pattern:", 
-          btnSearch = shiny::icon("search"), 
-          btnReset = shiny::icon("remove"),
-          width = "100%"
-        )
-      })
-      
       preselectedtests <- shiny::reactive({
         shiny::req(!base::is.na(course_data()$tests))
-        shiny::req(!base::is.null(input$deftestpattern))
-        preslcttests <- base::unique(stats::na.omit(course_data()$tests$test))
-        if (base::nchar(input$deftestpattern) > 0) {
-          preslcttests <- preslcttests[stringr::str_detect(preslcttests, input$deftestpattern)]
-        }
-        preslcttests
+        base::unique(stats::na.omit(course_data()$tests$test))
       })
       
       selecttest <- editR::selection_server("pslt", preselectedtests)

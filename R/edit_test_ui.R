@@ -28,20 +28,16 @@ edit_test_ui <- function(id){
   base::list(
     shiny::fluidRow(
       shiny::column(
-        3,
+        2,
         shiny::actionButton(
           ns("newtest"),
           shiny::span("New test", title = ""),
           icon = shiny::icon("wand-magic-sparkles"),
-          style = "background-color:#003366;color:#FFF;width:100%;margin-top:25px;margin-bottom:10px;border:0px;"
+          style = "background-color:#003366;color:#FFF;width:100%;height:100%;"
         )
       ),
       shiny::column(
-        3,
-        shiny::uiOutput(ns("testpattern"))
-      ),
-      shiny::column(
-        6,
+        10,
         editR::selection_ui(ns("pslt"), "Test")
       )
     ),
