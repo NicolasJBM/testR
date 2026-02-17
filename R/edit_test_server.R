@@ -4,8 +4,8 @@
 #' @description Module allowing the user to create, edit and publish tests from a questions bank.
 #' @param id Character. ID of the module to connect the user interface to the appropriate server side.
 #' @param filtered Reactive. List of pre-selected documents.
+#' @param tbltree Reactive. Selected tree.
 #' @param course_data Reactive. Function containing all the course data loaded with the course.
-#' @param intake Reactive. Selected intake.
 #' @param course_paths Reactive. Function containing a list of paths to the different folders and databases on local disk.
 #' @return Save the test parameters in the relevant test sub-folder in the appropriate test subfolder.
 #' @importFrom chartR draw_composition_barchart
@@ -90,7 +90,7 @@
 
 
 edit_test_server <- function(
-  id, filtered, course_data, intake, course_paths
+  id, filtered, tbltree = NULL, course_data, course_paths
 ){
   ns <- shiny::NS(id)
   shiny::moduleServer(
@@ -587,7 +587,6 @@ edit_test_server <- function(
       
       output$question_organization <- rhandsontable::renderRHandsontable({
         input$update_question_organization
-        shiny::req(!base::is.na(intake()$intake$intake[1]))
         shiny::req(base::nchar(modrval$parameters_path) > 3)
         shiny::req(base::file.exists(modrval$parameters_path))
         base::load(modrval$parameters_path)
@@ -843,14 +842,14 @@ edit_test_server <- function(
       # Test composition #######################################################
       
       selected_positions <- shiny::reactive({
-        
-        levnbr <- stringr::str_count(intake()$tbltree$position[1], "-")+1
+        shiny::req(!base::is.null(tbltree()))
+        levnbr <- stringr::str_count(tbltree()$position[1], "-")+1
         depthlevel <- base::min(input$slctdepth, levnbr)
         depthlevel <- base::paste0("LEV", depthlevel)
         
         selected_positions <- filtered() |>
           dplyr::select(file) |>
-          dplyr::left_join(dplyr::select(intake()$tbltree, file, position, title), by = "file") |>
+          dplyr::left_join(dplyr::select(tbltree(), file, position, title), by = "file") |>
           tidyr::separate(position, into = base::paste0("LEV", base::seq_len(levnbr)), sep = "-", fill = "right", remove = FALSE) |>
           dplyr::rename(depth = dplyr::all_of(depthlevel), section = title)
         
@@ -865,7 +864,7 @@ edit_test_server <- function(
       })
       
       composition <- shiny::reactive({
-        shiny::req(!base::is.na(intake()$intake$intake[1]))
+        shiny::req(!base::is.null(tbltree()))
         base::load(course_paths()$databases$document_parameters)
         modrval$test_parameters |>
           dplyr::group_by(section, bloc) |>
@@ -875,7 +874,7 @@ edit_test_server <- function(
           base::unique() |>
           dplyr::mutate(count = 1) |>
           dplyr::left_join(
-            dplyr::select(intake()$tbltree, question = file, position, type, dplyr::starts_with("tag_")), 
+            dplyr::select(tbltree(), question = file, position, type, dplyr::starts_with("tag_")), 
             by = "question"
           ) |>
           dplyr::left_join(
@@ -891,16 +890,13 @@ edit_test_server <- function(
       })
       
       categorical_values <- shiny::reactive({
-        shiny::req(!base::is.na(intake()$course[1]))
-        base::load(course_paths()$databases$doctypes)
-        base::load(course_paths()$databases$tags)
         positions <- selected_positions() |>
           dplyr::arrange(position) |>
           dplyr::mutate(
             category = "section",
             catvalue = section
           )
-        tags <- tags |>
+        tags <- course_data()$tags |>
           dplyr::arrange(order)
         dplyr::bind_rows(
           dplyr::select(positions, category, catvalue),
