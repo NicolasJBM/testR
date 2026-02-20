@@ -11,7 +11,7 @@ Authors@R:
 Description: Functions and interfaces to facilitate the creation and publication of formative and summative assessments.
 Encoding: UTF-8
 License: GPL-3 | file LICENSE
-Depends: R (>= 3.6)
+Depends: R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
@@ -32,8 +32,7 @@ Imports:
     tidyr,
     exams,
     knitr,
-    rmarkdown,
-    fs
+    rmarkdown
 Remotes:
     NicolasJBM/editR,
     NicolasJBM/classR,

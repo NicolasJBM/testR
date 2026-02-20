@@ -33,7 +33,7 @@ edit_test_ui <- function(id){
           ns("newtest"),
           shiny::span("New test", title = ""),
           icon = shiny::icon("wand-magic-sparkles"),
-          style = "background-color:#003366;color:#FFF;width:100px;height:100px;"
+          style = "background-color:#003366;color:#FFF;width:100%;height:75px;"
         )
       ),
       shiny::column(

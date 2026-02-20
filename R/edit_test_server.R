@@ -84,7 +84,6 @@
 #' @importFrom tidyr nest
 #' @importFrom tidyr replace_na
 #' @importFrom tidyr unnest
-#' @importFrom fs dir_copy
 #' @export
 
 
@@ -158,6 +157,14 @@ edit_test_server <- function(
       tag <- NULL
       depth <- NULL
       test <- NULL
+      activity <- NULL
+      end <- NULL
+      fileinbloc <- NULL
+      level <- NULL
+      maxfile <- NULL
+      outcomes <- NULL
+      prepversion <- NULL
+      documents <- NULL
       
       modrval <- shiny::reactiveValues()
       
@@ -506,7 +513,7 @@ edit_test_server <- function(
           version = stringr::str_extract(add_questions, "(?<=_)(.*)(?=.Rmd)")
         ) |>
           dplyr::mutate(
-            version = base::paste0(version, section, bloc, 1, 1, ".Rmd"),
+            version = base::paste0(version, section, bloc, "-", 1, "-", 1, ".Rmd"),
             seed = base::ceiling(stats::runif(base::length(add_questions)) * 10000)
           )
         
@@ -621,7 +628,6 @@ edit_test_server <- function(
       shiny::observeEvent(input$save_question_organization, {
         shiny::req(!base::is.null(input$question_organization))
         
-        
         test_parameters <- modrval$test_parameters
         test_information <- test_parameters[1,1:11]
         languages <- stringr::str_split(
@@ -661,7 +667,7 @@ edit_test_server <- function(
         updatequest <- updatequest |>
           dplyr::mutate_if(base::is.factor, base::as.character) |>
           dplyr::mutate(version = base::paste0(
-            language, "-", section, "-", bloc, nbrinbloc, "-",version_nbr, ".Rmd"
+            language, "-", section, "-", bloc, "-", nbrinbloc, "-", version_nbr, ".Rmd"
           )) |>
           dplyr::select(-version_nbr, -version_id, -nbrinbloc) |>
           dplyr::left_join(initial_versions, by = c("question", "version")) |>
@@ -730,38 +736,84 @@ edit_test_server <- function(
         )
       })
       
-      output$test_statistics <- shiny::renderUI({
-        shiny::req(!base::is.null(modrval$test_parameters))
-        shiny::req(base::nrow(modrval$test_parameters) > 0)
-        base_test_statistics <- modrval$test_parameters |>
-          dplyr::select(
-            file = question, section, bloc, points, test_points, test_duration
+      
+      
+      # Test composition #######################################################
+      
+      selected_positions <- shiny::reactive({
+        shiny::req(!base::is.null(tbltree()))
+        levnbr <- stringr::str_count(tbltree()$position[1], "-")+1
+        depthlevel <- base::min(input$slctdepth, levnbr)
+        depthlevel <- base::paste0("LEV", depthlevel)
+        
+        selected_positions <- filtered() |>
+          dplyr::select(file) |>
+          dplyr::left_join(dplyr::select(tbltree(), file, position, title), by = "file") |>
+          tidyr::separate(position, into = base::paste0("LEV", base::seq_len(levnbr)), sep = "-", fill = "right", remove = FALSE) |>
+          dplyr::rename(depth = dplyr::all_of(depthlevel), section = title)
+        
+        selected_positions |>
+          dplyr::arrange(position) |>
+          dplyr::group_by(depth) |>
+          dplyr::slice_head(n = 1) |>
+          dplyr::ungroup() |>
+          dplyr::select(depth, section) |>
+          dplyr::left_join(dplyr::select(selected_positions, depth, position, title), by = "depth") |>
+          dplyr::select(section, position)
+      })
+      
+      composition <- shiny::reactive({
+        shiny::req(!base::is.null(tbltree()))
+        base::load(course_paths()$databases$document_parameters)
+        base::load(course_paths()$databases$documents)
+        modrval$test_parameters |>
+          dplyr::group_by(section, bloc) |>
+          dplyr::sample_n(1) |>
+          dplyr::ungroup() |>
+          dplyr::select(question, test_duration, test_points, points) |>
+          base::unique() |>
+          dplyr::mutate(count = 1) |>
+          dplyr::left_join(
+            dplyr::select(documents, question = file, type, dplyr::starts_with("tag_")), 
+            by = "question"
           ) |>
           dplyr::left_join(
-            dplyr::select(course_data()$documents, file, code, language),
-            by = "file"
+            dplyr::select(tbltree(), question = file, position), 
+            by = "question"
           ) |>
-          dplyr::left_join(course_data()$document_parameters, by = "file") |>
-          dplyr::select(
-            file, section, bloc, points, test_points, test_duration, success
+          dplyr::left_join(
+            dplyr::select(document_parameters, question = file, success, difficulty, discrimination, guess), 
+            by = "question"
+          ) |>
+          dplyr::left_join(selected_positions(), by = "position") |>
+          dplyr::mutate(
+            category1 = base::get(input$slctdim1),
+            category2 = base::get(input$slctdim2),
+            value = base::get(input$slctval)
           )
+      })
+      
+      
+      
+      output$test_statistics <- shiny::renderUI({
+        shiny::req(!base::is.null(composition()))
+        shiny::req(base::nrow(composition()) > 0)
+        shiny::req(!base::is.null(modrval$test_parameters))
+        shiny::req(base::nrow(modrval$test_parameters) > 0)
         
-        base_test_statistics <- base_test_statistics |>
-          tidyr::replace_na(base::list(
-            success = base::mean(base_test_statistics$success, na.rm = TRUE)
+        base_test_statistics <- composition() |>
+          dplyr::select(
+            question, points, test_points, test_duration, success
+          ) |>
+          dplyr::mutate(success = dplyr::case_when(
+            base::is.na(success) ~ base::mean(success, na.rm = TRUE),
+            !base::is.finite(success) ~ 0,
+            TRUE ~ success
           )) |>
           dplyr::mutate(expected = points * success / 100)
         
         distinct_questions <- base_test_statistics |>
-          dplyr::group_by(section, bloc) |>
-          dplyr::summarise(
-            count = 1,
-            points = base::mean(points, na.rm = TRUE),
-            test_points = base::max(test_points, na.rm = TRUE),
-            test_duration = base::max(test_duration, na.rm = TRUE),
-            expected = base::mean(expected, na.rm = TRUE),
-            .groups = "drop"
-          ) |>
+          dplyr::mutate(count = 1) |>
           dplyr::summarise(
             count = base::sum(count),
             points = base::sum(points, na.rm = TRUE),
@@ -838,56 +890,6 @@ edit_test_server <- function(
       })
       
       
-      
-      # Test composition #######################################################
-      
-      selected_positions <- shiny::reactive({
-        shiny::req(!base::is.null(tbltree()))
-        levnbr <- stringr::str_count(tbltree()$position[1], "-")+1
-        depthlevel <- base::min(input$slctdepth, levnbr)
-        depthlevel <- base::paste0("LEV", depthlevel)
-        
-        selected_positions <- filtered() |>
-          dplyr::select(file) |>
-          dplyr::left_join(dplyr::select(tbltree(), file, position, title), by = "file") |>
-          tidyr::separate(position, into = base::paste0("LEV", base::seq_len(levnbr)), sep = "-", fill = "right", remove = FALSE) |>
-          dplyr::rename(depth = dplyr::all_of(depthlevel), section = title)
-        
-        selected_positions |>
-          dplyr::arrange(position) |>
-          dplyr::group_by(depth) |>
-          dplyr::slice_head(n = 1) |>
-          dplyr::ungroup() |>
-          dplyr::select(depth, section) |>
-          dplyr::left_join(dplyr::select(selected_positions, depth, position, title), by = "depth") |>
-          dplyr::select(section, position)
-      })
-      
-      composition <- shiny::reactive({
-        shiny::req(!base::is.null(tbltree()))
-        base::load(course_paths()$databases$document_parameters)
-        modrval$test_parameters |>
-          dplyr::group_by(section, bloc) |>
-          dplyr::sample_n(1) |>
-          dplyr::ungroup() |>
-          dplyr::select(question, points) |>
-          base::unique() |>
-          dplyr::mutate(count = 1) |>
-          dplyr::left_join(
-            dplyr::select(tbltree(), question = file, position, type, dplyr::starts_with("tag_")), 
-            by = "question"
-          ) |>
-          dplyr::left_join(
-            dplyr::select(document_parameters, question = file, difficulty, discrimination, guess), 
-            by = "question"
-          ) |>
-          dplyr::left_join(selected_positions(), by = "position") |>
-          dplyr::mutate(
-            category1 = base::get(input$slctdim1),
-            category2 = base::get(input$slctdim2),
-            value = base::get(input$slctval)
-          )
-      })
       
       categorical_values <- shiny::reactive({
         positions <- selected_positions() |>
@@ -1403,13 +1405,22 @@ edit_test_server <- function(
       })
       
       shiny::observeEvent(input$newtest, {
+        possiblepaths <- c("None", base::unique(course_data()$activities$path))
         shiny::showModal(
           shiny::modalDialog(
             style = "background-color:#001F3F;color:#FFF;margin-top:300px;",
             shiny::textInput(
               ns("new_test_name"),
               "Name of the new test",
-              value = "NEWTEST", width = "100%"
+              value = "NEWTEST",
+              width = "100%"
+            ),
+            shiny::selectInput(
+              ns("baseonpath"),
+              "Based on a path:",
+              choices = possiblepaths,
+              selected = "None",
+              width = "100%"
             ),
             footer = tagList(
               shiny::modalButton("Cancel"),
@@ -1436,18 +1447,41 @@ edit_test_server <- function(
             closeOnClickOutside = TRUE
           )
         } else {
-          test_template <- base::paste0(
-            course_paths()$subfolders$tests, "/default"
+          
+          shinybusy::show_modal_progress_line(
+            value = 0, text = "Create a new test based on a path."
           )
+          
           new_test_folder <- base::paste0(
             course_paths()$subfolders$tests, "/", base::toupper(input$new_test_name)
           )
-          fs::dir_copy(test_template, new_test_folder)
+          base::dir.create(new_test_folder)
+          
           base::Sys.sleep(2)
+          
+          questfolder <- base::paste0(new_test_folder, "/1_questions")
+          versfolder <- base::paste0(new_test_folder, "/2_versions")
+          tempfolder <- base::paste0(new_test_folder, "/3_temporary")
+          solfolder <- base::paste0(new_test_folder, "/4_solutions")
+          examfolder <- base::paste0(new_test_folder, "/5_examination")
+          answfolder <- base::paste0(new_test_folder, "/6_answers")
+          feefolder <- base::paste0(new_test_folder, "/7_feedback")
+          
+          base::dir.create(questfolder)
+          base::dir.create(versfolder)
+          base::dir.create(tempfolder)
+          base::dir.create(solfolder)
+          base::dir.create(examfolder)
+          base::dir.create(answfolder)
+          base::dir.create(feefolder)
+          
+          base::Sys.sleep(2)
+          
           path_param <- base::paste0(new_test_folder, "/test_parameters.RData")
-          base::load(path_param)
-          test_parameters <- test_parameters[1,] |>
-            dplyr::mutate(
+          
+          if (input$baseonpath == "None"){
+            
+            test_parameters <- tibble::tibble(
               test = base::toupper(input$new_test_name),
               test_format = "quiz",
               test_unit = "student",
@@ -1469,8 +1503,148 @@ edit_test_server <- function(
               version = base::as.character(NA),
               seed = base::as.integer(NA)
             )
+            
+          } else {
+            
+            activities <- course_data()$activities
+            files <- course_data()$files
+            languages <- course_data()$languages$langiso
+            
+            # Create test_parameters
+            
+            test_parameters <- activities |>
+              dplyr::filter(type %in% c("Statements","Alternatives","Computation","Essay","Problem")) |>
+              dplyr::left_join(files, by = "activity")
+            
+            test_parameters <- test_parameters |>
+              dplyr::mutate(
+                test_format = "quiz",
+                test_unit = dplyr::case_when(
+                  social == "IND" ~ "student",
+                  social == "TM" ~ "team",
+                  TRUE ~ "group"
+                ),
+                test_assessment = dplyr::case_when(
+                  stringr::str_detect(base::tolower(subgroup), "quiz") ~ "formative",
+                  TRUE ~ "summative"
+                ),
+                test_documentation = "unlimited",
+                test_languages = base::paste(languages, collapse = ";"),
+                test_date = base::as.Date(end),
+                test_duration = 0,
+                test_points = 0,
+                show_version = FALSE,
+                show_points = FALSE,
+                question = file,
+                section = stringr::str_replace_all(outcomes, " ", "_"),
+                bloc = base::paste0(type, "_", level),
+                altnbr = dplyr::case_when(
+                  type == "Essay" ~ 0,
+                  type == "Problem" ~ 0,
+                  TRUE ~ 5
+                ),
+                points = 2,
+                partial_credits = FALSE,
+                penalty = FALSE,
+                version = 1
+              ) |>
+              dplyr::mutate(test = base::toupper(input$new_test_name)) |>
+              dplyr::group_by(section, bloc) |>
+              tidyr::nest() |>
+              dplyr::mutate(
+                data = purrr::map(data, function(x) {
+                  filenbr <- base::nrow(x)
+                  x$fileinbloc <- base::seq_len(filenbr)
+                  x$seed = base::ceiling(stats::runif(filenbr)*10000)
+                  x
+                })
+              ) |>
+              tidyr::unnest(data) |>
+              dplyr::ungroup() |>
+              dplyr::mutate(
+                maxfile = base::max(fileinbloc),
+                fileinbloc = purrr::map2_chr(fileinbloc, maxfile, function(x,y){
+                  lx <- base::nchar(base::as.character(x))
+                  ly <- base::nchar(base::as.character(y))
+                  base::paste0(base::rep(0,(ly-lx)),x)
+                }),
+                prepversion = base::paste0("US-", section, "-", bloc, "-", fileinbloc),
+                version = base::paste0(prepversion, "-", version, ".Rmd")
+              ) |>
+              dplyr::select(
+                test,
+                test_format,
+                test_unit,
+                test_assessment,
+                test_documentation,
+                test_languages,
+                test_date,
+                test_duration,
+                test_points,
+                show_version,
+                show_points,
+                question,
+                section,
+                bloc,
+                altnbr,
+                points,
+                partial_credits,
+                penalty,
+                version,
+                seed
+              )
+            
+            tot <- base::nrow(test_parameters)
+            pgr <- 1 / tot
+            
+            # Cycle through rows to transfer questions and versions to the exam folder.
+            
+            originfolder <- course_paths()$subfolders$original
+            translfolder <- course_paths()$subfolders$translated
+            
+            for (v in base::seq_len(base::nrow(test_parameters))){
+              pgr <- pgr + 1 / tot
+              
+              question <- test_parameters$question[v]
+              version <- test_parameters$version[v]
+              
+              shinybusy::update_modal_progress(
+                value = pgr,
+                text = base::paste0("Creating version ", version)
+              )
+              
+              base::file.copy(
+                from = base::paste0(originfolder, "/", question),
+                to = base::paste0(questfolder, "/", question)
+              )
+              
+              lines <- base::readLines(base::paste0(originfolder, "/", question))
+              lines[2] <- base::paste0('versionid <- "', version,'"')
+              base::writeLines(lines, base::paste0(versfolder, "/", version))
+              
+              for (l in languages[-1]){
+                question <- stringr::str_replace(question, "_...Rmd$", base::paste0("_", l, ".Rmd"))
+                version <- stringr::str_replace(version, "^..", l)
+                
+                base::file.copy(
+                  from = base::paste0(translfolder, "/", question),
+                  to = base::paste0(questfolder, "/", question)
+                )
+                
+                lines <- base::readLines(base::paste0(translfolder, "/", question))
+                lines[2] <- base::paste0('versionid <- "', version,'"')
+                base::writeLines(lines, base::paste0(versfolder, "/", version))
+                
+              }
+              
+            }
+            
+          }
           
           base::save(test_parameters, file = path_param)
+          
+          shinybusy::remove_modal_spinner()
+          
           shinyalert::shinyalert(
             "Test created",
             base::paste0(
