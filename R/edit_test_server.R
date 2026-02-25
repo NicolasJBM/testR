@@ -1465,6 +1465,7 @@ edit_test_server <- function(
           solfolder <- base::paste0(new_test_folder, "/4_solutions")
           examfolder <- base::paste0(new_test_folder, "/5_examination")
           answfolder <- base::paste0(new_test_folder, "/6_answers")
+          textfolder <- base::paste0(answfolder, "/text")
           feefolder <- base::paste0(new_test_folder, "/7_feedback")
           
           base::dir.create(questfolder)
@@ -1473,6 +1474,7 @@ edit_test_server <- function(
           base::dir.create(solfolder)
           base::dir.create(examfolder)
           base::dir.create(answfolder)
+          base::dir.create(textfolder)
           base::dir.create(feefolder)
           
           base::Sys.sleep(2)
