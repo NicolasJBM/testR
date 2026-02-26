@@ -1406,6 +1406,7 @@ edit_test_server <- function(
       
       shiny::observeEvent(input$newtest, {
         possiblepaths <- c("None", base::unique(course_data()$activities$path))
+        possiblefeedback <- base::list.files(base::paste0(course_paths()$subfolders$templates_feedback), full.names = FALSE)
         shiny::showModal(
           shiny::modalDialog(
             style = "background-color:#001F3F;color:#FFF;margin-top:300px;",
@@ -1421,6 +1422,13 @@ edit_test_server <- function(
               choices = possiblepaths,
               selected = "None",
               width = "100%"
+            ),
+            shiny::selectInput(
+              ns("baseonfeedback"),
+              "Based on a path:",
+              choices = possiblefeedback,
+              selected = possiblefeedback[1],
+              width = "100%", multiple = TRUE
             ),
             footer = tagList(
               shiny::modalButton("Cancel"),
@@ -1466,7 +1474,7 @@ edit_test_server <- function(
           examfolder <- base::paste0(new_test_folder, "/5_examination")
           answfolder <- base::paste0(new_test_folder, "/6_answers")
           textfolder <- base::paste0(answfolder, "/text")
-          feefolder <- base::paste0(new_test_folder, "/7_feedback")
+          feedfolder <- base::paste0(new_test_folder, "/7_feedback")
           
           base::dir.create(questfolder)
           base::dir.create(versfolder)
@@ -1475,9 +1483,26 @@ edit_test_server <- function(
           base::dir.create(examfolder)
           base::dir.create(answfolder)
           base::dir.create(textfolder)
-          base::dir.create(feefolder)
+          base::dir.create(feedfolder)
           
           base::Sys.sleep(2)
+          
+          tibble::tibble(
+            test = base::character(0),
+            version = base::character(0),
+            intake = base::character(0),
+            studentid = base::character(0),
+            end = base::character(0),
+            comment = base::character(0)
+          ) |>
+            utils::write.csv(file = base::paste0(feedfolder,"/comment.csv"))
+          
+          for (template in input$baseonfeedback){
+            base::file.copy(
+              from = base::paste0(course_paths()$subfolders$templates_feedback, "/", template),
+              to = base::paste0(feedfolder, "/", template)
+            )
+          }
           
           path_param <- base::paste0(new_test_folder, "/test_parameters.RData")
           
