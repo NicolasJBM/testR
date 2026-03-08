@@ -41,6 +41,10 @@ export_test_to_lms <- function(
   docdir <- base::paste0(exam_folder, "/2_versions")
   tmpdir <- base::paste0(exam_folder, "/3_temporary")
   outdir <- base::paste0(exam_folder, "/5_examination")
+  outdirlms <- base::paste0(outdir, "/", lms)
+  if (!base::dir.exists(outdirlms)) base::dir.create(outdirlms)
+  outdirlmslg <- base::paste0(outdirlms, "/", language)
+  if (!base::dir.exists(outdirlmslg)) base::dir.create(outdirlmslg)
   
   base::unlink(
     base::paste0(tmpdir, "/*"),
@@ -58,7 +62,7 @@ export_test_to_lms <- function(
   record_solution <- TRUE
   docformat <- "html"
   
-  filename <- base::paste0(lms, "_", language, "_", section, "_", bloc)
+  filename <- base::paste0(section, "-", bloc)
   
   base::print(base::paste0(
     "Generating section ", section,
@@ -73,11 +77,11 @@ export_test_to_lms <- function(
       file = question_list$version,
       n = 1,
       name = filename,
-      dir = outdir,
+      dir = outdirlmslg,
       edir = docdir,
       tdir = tmpdir,
       sdir = tmpdir,
-      stitle = question_list$bloc,
+      stitle = filename,
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
