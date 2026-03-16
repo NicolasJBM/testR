@@ -62,7 +62,9 @@ export_test_to_lms <- function(
   record_solution <- TRUE
   docformat <- "html"
   
-  filename <- base::paste0(section, "-", bloc)
+  export_name <- base::paste0(section, "-", bloc)
+  category_names <- stringr::str_remove_all(question_list$version, "-[0-9]+.Rmd")
+  
   
   base::print(base::paste0(
     "Generating section ", section,
@@ -76,12 +78,12 @@ export_test_to_lms <- function(
     exams::exams2moodle(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdirlmslg,
       edir = docdir,
       tdir = tmpdir,
       sdir = tmpdir,
-      stitle = filename,
+      stitle = category_names,
       points = base::unlist(question_list$points),
       quiet = TRUE,
       verbose = FALSE,
@@ -94,7 +96,7 @@ export_test_to_lms <- function(
     exams::exams2canvas(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -117,7 +119,7 @@ export_test_to_lms <- function(
     exams::exams2blackboard(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -134,7 +136,7 @@ export_test_to_lms <- function(
     exams::exams2openolat(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -158,7 +160,7 @@ export_test_to_lms <- function(
     exams::exams2arsnova(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -181,7 +183,7 @@ export_test_to_lms <- function(
     exams::exams2particify(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -198,7 +200,7 @@ export_test_to_lms <- function(
     exams::exams2ilias(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -221,7 +223,7 @@ export_test_to_lms <- function(
     exams::exams2tcexam(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -243,7 +245,7 @@ export_test_to_lms <- function(
     exams::exams2testvision(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -260,7 +262,7 @@ export_test_to_lms <- function(
     exams::exams2qti12(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -277,7 +279,7 @@ export_test_to_lms <- function(
     exams::exams2qti21(
       file = question_list$version,
       n = 1,
-      name = filename,
+      name = export_name,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
