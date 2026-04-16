@@ -21,6 +21,16 @@ create_essay <- function(propositions, codes, interrogation){
   value <- NULL
   code <- NULL
   retire <- NULL
+  category <- NULL
+  correct <- NULL
+  document <- NULL
+  explanation <- NULL
+  item <- NULL
+  keywords <- NULL
+  letter <- NULL
+  modifications <- NULL
+  number <- NULL
+  weight <- NULL
   
   
   exercise <- propositions |>
@@ -35,7 +45,7 @@ create_essay <- function(propositions, codes, interrogation){
       item = "", code = "", type = "", document = "",
       language = "", modifications = 0,
       proposition = "", value = 1, scale = "",
-      keywords = ""
+      explanation = "", keywords = "", category = ""
     )
   }
   
@@ -47,7 +57,15 @@ create_essay <- function(propositions, codes, interrogation){
       number = base::seq_len(base::nrow(exercise)),
       letter = extendedleters[base::seq_len(base::nrow(exercise))],
       correct = value,
-      interrogation = interrogation
+      interrogation = interrogation,
+      category = "",
+    ) |>
+    dplyr::select(
+      number, letter, item,
+      type, document, language, modifications,
+      interrogation, proposition, value, scale,
+      explanation, keywords, correct,
+      weight, category
     )
   
   return(exercise)
