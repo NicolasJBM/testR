@@ -53,11 +53,7 @@ export_test_to_lms <- function(
   
   question_list <- test_parameters |>
     dplyr::arrange(section, bloc) |>
-    dplyr::select(section, bloc, points, version) |>
-    dplyr::group_by(section, bloc) |>
-    dplyr::summarise(
-      points = base::max(points), version = c(version), .groups = "drop" # the concatenation of version may trigger the deprecation warning
-    )
+    dplyr::select(section, bloc, points, version)
   
   record_solution <- TRUE
   docformat <- "html"
