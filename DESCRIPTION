@@ -32,7 +32,8 @@ Imports:
     tidyr,
     exams,
     knitr,
-    rmarkdown
+    rmarkdown,
+    fs
 Remotes:
     NicolasJBM/editR,
     NicolasJBM/classR,

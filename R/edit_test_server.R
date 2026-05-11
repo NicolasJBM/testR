@@ -84,6 +84,7 @@
 #' @importFrom tidyr nest
 #' @importFrom tidyr replace_na
 #' @importFrom tidyr unnest
+#' @importFrom fs dir_copy
 #' @export
 
 
@@ -1405,6 +1406,7 @@ edit_test_server <- function(
       })
       
       shiny::observeEvent(input$newtest, {
+        possibletests <- c("None", base::unique(course_data()$tests$test))
         possiblepaths <- c("None", base::unique(course_data()$activities$path))
         possiblefeedback <- base::list.files(base::paste0(course_paths()$subfolders$templates_feedback), full.names = FALSE)
         shiny::showModal(
@@ -1416,12 +1418,27 @@ edit_test_server <- function(
               value = "NEWTEST",
               width = "100%"
             ),
-            shiny::selectInput(
-              ns("baseonpath"),
-              "Based on a path:",
-              choices = possiblepaths,
-              selected = "None",
-              width = "100%"
+            shiny::fluidRow(
+              shiny::column(
+                6,
+                shiny::selectInput(
+                  ns("baseontest"),
+                  "Based on a test:",
+                  choices = possibletests,
+                  selected = "None",
+                  width = "100%"
+                )
+              ),
+              shiny::column(
+                6,
+                shiny::selectInput(
+                  ns("baseonpath"),
+                  "Based on a path:",
+                  choices = possiblepaths,
+                  selected = "None",
+                  width = "100%"
+                )
+              )
             ),
             shiny::selectInput(
               ns("baseonfeedback"),
@@ -1457,218 +1474,236 @@ edit_test_server <- function(
         } else {
           
           shinybusy::show_modal_progress_line(
-            value = 0, text = "Create a new test based on a path."
+            value = 0, text = "Create a new test."
           )
           
-          new_test_folder <- base::paste0(
-            course_paths()$subfolders$tests, "/", base::toupper(input$new_test_name)
-          )
-          base::dir.create(new_test_folder)
-          
-          base::Sys.sleep(2)
-          
-          questfolder <- base::paste0(new_test_folder, "/1_questions")
-          versfolder <- base::paste0(new_test_folder, "/2_versions")
-          tempfolder <- base::paste0(new_test_folder, "/3_temporary")
-          solfolder <- base::paste0(new_test_folder, "/4_solutions")
-          examfolder <- base::paste0(new_test_folder, "/5_examination")
-          answfolder <- base::paste0(new_test_folder, "/6_answers")
-          textfolder <- base::paste0(answfolder, "/text")
-          feedfolder <- base::paste0(new_test_folder, "/7_feedback")
-          
-          base::dir.create(questfolder)
-          base::dir.create(versfolder)
-          base::dir.create(tempfolder)
-          base::dir.create(solfolder)
-          base::dir.create(examfolder)
-          base::dir.create(answfolder)
-          base::dir.create(textfolder)
-          base::dir.create(feedfolder)
-          
-          base::Sys.sleep(2)
-          
-          tibble::tibble(
-            test = base::character(0),
-            version = base::character(0),
-            intake = base::character(0),
-            studentid = base::character(0),
-            end = base::character(0),
-            comment = base::character(0)
-          ) |>
-            utils::write.csv(file = base::paste0(feedfolder,"/comment.csv"))
-          
-          for (template in input$baseonfeedback){
-            base::file.copy(
-              from = base::paste0(course_paths()$subfolders$templates_feedback, "/", template),
-              to = base::paste0(feedfolder, "/", template)
-            )
-          }
-          
-          path_param <- base::paste0(new_test_folder, "/test_parameters.RData")
-          
-          if (input$baseonpath == "None"){
+          if (input$baseontest != "None"){
             
-            test_parameters <- tibble::tibble(
-              test = base::toupper(input$new_test_name),
-              test_format = "quiz",
-              test_unit = "student",
-              test_assessment = "formative",
-              test_documentation = "open-book",
-              test_languages = "US",
-              test_date = base::Sys.Date(),
-              test_duration = 0,
-              test_points = 0,
-              show_version = FALSE,
-              show_points = FALSE,
-              question = base::as.character(NA),
-              section = base::as.character(NA),
-              bloc = base::as.character(NA),
-              altnbr = base::as.integer(NA),
-              points = base::as.integer(NA),
-              partial_credits = base::as.logical(NA),
-              penalty = base::as.logical(NA),
-              version = base::as.character(NA),
-              seed = base::as.integer(NA)
+            new_test_folder <- base::paste0(
+              course_paths()$subfolders$tests, "/", base::toupper(input$new_test_name)
             )
+            base::dir.create(new_test_folder)
+            
+            fs::dir_copy(
+              path = base::paste0(course_paths()$subfolders$tests, "/", input$baseontest),
+              new_path = new_test_folder, overwrite = TRUE
+            )
+            
+            base::load(base::paste0(new_test_folder, "/test_parameters.RData"))
+            test_parameters$test <- input$new_test_name
+            base::save(test_parameters, file = base::paste0(new_test_folder, "/test_parameters.RData"))
             
           } else {
+            new_test_folder <- base::paste0(
+              course_paths()$subfolders$tests, "/", base::toupper(input$new_test_name)
+            )
+            base::dir.create(new_test_folder)
             
-            activities <- course_data()$activities
-            files <- course_data()$files
-            languages <- course_data()$languages$langiso
+            base::Sys.sleep(2)
             
-            # Create test_parameters
+            questfolder <- base::paste0(new_test_folder, "/1_questions")
+            versfolder <- base::paste0(new_test_folder, "/2_versions")
+            tempfolder <- base::paste0(new_test_folder, "/3_temporary")
+            solfolder <- base::paste0(new_test_folder, "/4_solutions")
+            examfolder <- base::paste0(new_test_folder, "/5_examination")
+            answfolder <- base::paste0(new_test_folder, "/6_answers")
+            textfolder <- base::paste0(answfolder, "/text")
+            feedfolder <- base::paste0(new_test_folder, "/7_feedback")
             
-            test_parameters <- activities |>
-              dplyr::filter(type %in% c("Statements","Alternatives","Computation","Essay","Problem")) |>
-              dplyr::left_join(files, by = "activity")
+            base::dir.create(questfolder)
+            base::dir.create(versfolder)
+            base::dir.create(tempfolder)
+            base::dir.create(solfolder)
+            base::dir.create(examfolder)
+            base::dir.create(answfolder)
+            base::dir.create(textfolder)
+            base::dir.create(feedfolder)
             
-            test_parameters <- test_parameters |>
-              dplyr::mutate(
+            base::Sys.sleep(2)
+            
+            tibble::tibble(
+              test = base::character(0),
+              version = base::character(0),
+              intake = base::character(0),
+              studentid = base::character(0),
+              end = base::character(0),
+              comment = base::character(0)
+            ) |>
+              utils::write.csv(file = base::paste0(feedfolder,"/comment.csv"))
+            
+            for (template in input$baseonfeedback){
+              base::file.copy(
+                from = base::paste0(course_paths()$subfolders$templates_feedback, "/", template),
+                to = base::paste0(feedfolder, "/", template)
+              )
+            }
+            
+            path_param <- base::paste0(new_test_folder, "/test_parameters.RData")
+            
+            if (input$baseonpath == "None"){
+              
+              test_parameters <- tibble::tibble(
+                test = base::toupper(input$new_test_name),
                 test_format = "quiz",
-                test_unit = dplyr::case_when(
-                  social == "IND" ~ "student",
-                  social == "TM" ~ "team",
-                  TRUE ~ "group"
-                ),
-                test_assessment = dplyr::case_when(
-                  stringr::str_detect(base::tolower(subgroup), "quiz") ~ "formative",
-                  TRUE ~ "summative"
-                ),
-                test_documentation = "unlimited",
-                test_languages = base::paste(languages, collapse = ";"),
-                test_date = base::as.Date(end),
+                test_unit = "student",
+                test_assessment = "formative",
+                test_documentation = "open-book",
+                test_languages = "US",
+                test_date = base::Sys.Date(),
                 test_duration = 0,
                 test_points = 0,
                 show_version = FALSE,
                 show_points = FALSE,
-                question = file,
-                section = stringr::str_replace_all(outcomes, " ", "_"),
-                bloc = base::paste0(type, "_", level),
-                altnbr = dplyr::case_when(
-                  type == "Essay" ~ 0,
-                  type == "Problem" ~ 0,
-                  TRUE ~ 5
-                ),
-                points = 2,
-                partial_credits = FALSE,
-                penalty = FALSE,
-                version = 1
-              ) |>
-              dplyr::mutate(test = base::toupper(input$new_test_name)) |>
-              dplyr::group_by(section, bloc) |>
-              tidyr::nest() |>
-              dplyr::mutate(
-                data = purrr::map(data, function(x) {
-                  filenbr <- base::nrow(x)
-                  x$fileinbloc <- base::seq_len(filenbr)
-                  x$seed = base::ceiling(stats::runif(filenbr)*10000)
-                  x
-                })
-              ) |>
-              tidyr::unnest(data) |>
-              dplyr::ungroup() |>
-              dplyr::mutate(
-                maxfile = base::max(fileinbloc),
-                fileinbloc = purrr::map2_chr(fileinbloc, maxfile, function(x,y){
-                  lx <- base::nchar(base::as.character(x))
-                  ly <- base::nchar(base::as.character(y))
-                  base::paste0(base::rep(0,(ly-lx)),x)
-                }),
-                prepversion = base::paste0("US-", section, "-", bloc, "-", fileinbloc),
-                version = base::paste0(prepversion, "-", version, ".Rmd")
-              ) |>
-              dplyr::select(
-                test,
-                test_format,
-                test_unit,
-                test_assessment,
-                test_documentation,
-                test_languages,
-                test_date,
-                test_duration,
-                test_points,
-                show_version,
-                show_points,
-                question,
-                section,
-                bloc,
-                altnbr,
-                points,
-                partial_credits,
-                penalty,
-                version,
-                seed
-              )
-            
-            tot <- base::nrow(test_parameters)
-            pgr <- 1 / tot
-            
-            # Cycle through rows to transfer questions and versions to the exam folder.
-            
-            originfolder <- course_paths()$subfolders$original
-            translfolder <- course_paths()$subfolders$translated
-            
-            for (v in base::seq_len(base::nrow(test_parameters))){
-              pgr <- pgr + 1 / tot
-              
-              question <- test_parameters$question[v]
-              version <- test_parameters$version[v]
-              
-              shinybusy::update_modal_progress(
-                value = pgr,
-                text = base::paste0("Creating version ", version)
+                question = base::as.character(NA),
+                section = base::as.character(NA),
+                bloc = base::as.character(NA),
+                altnbr = base::as.integer(NA),
+                points = base::as.integer(NA),
+                partial_credits = base::as.logical(NA),
+                penalty = base::as.logical(NA),
+                version = base::as.character(NA),
+                seed = base::as.integer(NA)
               )
               
-              base::file.copy(
-                from = base::paste0(originfolder, "/", question),
-                to = base::paste0(questfolder, "/", question)
-              )
+            } else {
               
-              lines <- base::readLines(base::paste0(originfolder, "/", question))
-              lines[2] <- base::paste0('versionid <- "', version,'"')
-              base::writeLines(lines, base::paste0(versfolder, "/", version))
+              activities <- course_data()$activities
+              files <- course_data()$files
+              languages <- course_data()$languages$langiso
               
-              for (l in languages[-1]){
-                question <- stringr::str_replace(question, "_...Rmd$", base::paste0("_", l, ".Rmd"))
-                version <- stringr::str_replace(version, "^..", l)
+              # Create test_parameters
+              
+              test_parameters <- activities |>
+                dplyr::filter(type %in% c("Statements","Alternatives","Computation","Essay","Problem")) |>
+                dplyr::left_join(files, by = "activity")
+              
+              test_parameters <- test_parameters |>
+                dplyr::mutate(
+                  test_format = "quiz",
+                  test_unit = dplyr::case_when(
+                    social == "IND" ~ "student",
+                    social == "TM" ~ "team",
+                    TRUE ~ "group"
+                  ),
+                  test_assessment = dplyr::case_when(
+                    stringr::str_detect(base::tolower(subgroup), "quiz") ~ "formative",
+                    TRUE ~ "summative"
+                  ),
+                  test_documentation = "unlimited",
+                  test_languages = base::paste(languages, collapse = ";"),
+                  test_date = base::as.Date(end),
+                  test_duration = 0,
+                  test_points = 0,
+                  show_version = FALSE,
+                  show_points = FALSE,
+                  question = file,
+                  section = stringr::str_replace_all(outcomes, " ", "_"),
+                  bloc = base::paste0(type, "_", level),
+                  altnbr = dplyr::case_when(
+                    type == "Essay" ~ 0,
+                    type == "Problem" ~ 0,
+                    TRUE ~ 5
+                  ),
+                  points = 2,
+                  partial_credits = FALSE,
+                  penalty = FALSE,
+                  version = 1
+                ) |>
+                dplyr::mutate(test = base::toupper(input$new_test_name)) |>
+                dplyr::group_by(section, bloc) |>
+                tidyr::nest() |>
+                dplyr::mutate(
+                  data = purrr::map(data, function(x) {
+                    filenbr <- base::nrow(x)
+                    x$fileinbloc <- base::seq_len(filenbr)
+                    x$seed = base::ceiling(stats::runif(filenbr)*10000)
+                    x
+                  })
+                ) |>
+                tidyr::unnest(data) |>
+                dplyr::ungroup() |>
+                dplyr::mutate(
+                  maxfile = base::max(fileinbloc),
+                  fileinbloc = purrr::map2_chr(fileinbloc, maxfile, function(x,y){
+                    lx <- base::nchar(base::as.character(x))
+                    ly <- base::nchar(base::as.character(y))
+                    base::paste0(base::rep(0,(ly-lx)),x)
+                  }),
+                  prepversion = base::paste0("US-", section, "-", bloc, "-", fileinbloc),
+                  version = base::paste0(prepversion, "-", version, ".Rmd")
+                ) |>
+                dplyr::select(
+                  test,
+                  test_format,
+                  test_unit,
+                  test_assessment,
+                  test_documentation,
+                  test_languages,
+                  test_date,
+                  test_duration,
+                  test_points,
+                  show_version,
+                  show_points,
+                  question,
+                  section,
+                  bloc,
+                  altnbr,
+                  points,
+                  partial_credits,
+                  penalty,
+                  version,
+                  seed
+                )
+              
+              tot <- base::nrow(test_parameters)
+              pgr <- 1 / tot
+              
+              # Cycle through rows to transfer questions and versions to the exam folder.
+              
+              originfolder <- course_paths()$subfolders$original
+              translfolder <- course_paths()$subfolders$translated
+              
+              for (v in base::seq_len(base::nrow(test_parameters))){
+                pgr <- pgr + 1 / tot
+                
+                question <- test_parameters$question[v]
+                version <- test_parameters$version[v]
+                
+                shinybusy::update_modal_progress(
+                  value = pgr,
+                  text = base::paste0("Creating version ", version)
+                )
                 
                 base::file.copy(
-                  from = base::paste0(translfolder, "/", question),
+                  from = base::paste0(originfolder, "/", question),
                   to = base::paste0(questfolder, "/", question)
                 )
                 
-                lines <- base::readLines(base::paste0(translfolder, "/", question))
+                lines <- base::readLines(base::paste0(originfolder, "/", question))
                 lines[2] <- base::paste0('versionid <- "', version,'"')
                 base::writeLines(lines, base::paste0(versfolder, "/", version))
+                
+                for (l in languages[-1]){
+                  question <- stringr::str_replace(question, "_...Rmd$", base::paste0("_", l, ".Rmd"))
+                  version <- stringr::str_replace(version, "^..", l)
+                  
+                  base::file.copy(
+                    from = base::paste0(translfolder, "/", question),
+                    to = base::paste0(questfolder, "/", question)
+                  )
+                  
+                  lines <- base::readLines(base::paste0(translfolder, "/", question))
+                  lines[2] <- base::paste0('versionid <- "', version,'"')
+                  base::writeLines(lines, base::paste0(versfolder, "/", version))
+                  
+                }
                 
               }
               
             }
             
+            base::save(test_parameters, file = path_param)
           }
-          
-          base::save(test_parameters, file = path_param)
           
           shinybusy::remove_modal_spinner()
           
