@@ -9,7 +9,6 @@
 #' @param lms Character. Name of the learning management system for which the export should be generated.
 #' @param language Character. ISO2 code of the printed language.
 #' @param section Character. Name of the section.
-#' @param bloc Character. Name of the bloc.
 #' @importFrom dplyr arrange
 #' @importFrom dplyr group_by
 #' @importFrom dplyr select
@@ -32,10 +31,11 @@
 export_test_to_lms <- function(
     test_parameters, propositions, translations,
     exam_folder, lms = 'Moodle', language,
-    section = "A", bloc = "A"
+    section = "A"
 ){
   
   points <- NULL
+  bloc <- NULL
   
   testname <- test_parameters$test[1]
   docdir <- base::paste0(exam_folder, "/2_versions")
@@ -58,13 +58,11 @@ export_test_to_lms <- function(
   record_solution <- TRUE
   docformat <- "html"
   
-  export_name <- base::paste0(section, "-", bloc)
   category_names <- stringr::str_remove_all(question_list$version, "-[0-9]+.Rmd")
   
   
   base::print(base::paste0(
     "Generating section ", section,
-    " bloc ", bloc,
     " in ", language,
     " for ", lms,"..."
   ))
@@ -74,7 +72,7 @@ export_test_to_lms <- function(
     exams::exams2moodle(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdirlmslg,
       edir = docdir,
       tdir = tmpdir,
@@ -92,7 +90,7 @@ export_test_to_lms <- function(
     exams::exams2canvas(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -115,7 +113,7 @@ export_test_to_lms <- function(
     exams::exams2blackboard(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -132,7 +130,7 @@ export_test_to_lms <- function(
     exams::exams2openolat(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -156,7 +154,7 @@ export_test_to_lms <- function(
     exams::exams2arsnova(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -179,7 +177,7 @@ export_test_to_lms <- function(
     exams::exams2particify(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -196,7 +194,7 @@ export_test_to_lms <- function(
     exams::exams2ilias(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -219,7 +217,7 @@ export_test_to_lms <- function(
     exams::exams2tcexam(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -241,7 +239,7 @@ export_test_to_lms <- function(
     exams::exams2testvision(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -258,7 +256,7 @@ export_test_to_lms <- function(
     exams::exams2qti12(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,
@@ -275,7 +273,7 @@ export_test_to_lms <- function(
     exams::exams2qti21(
       file = question_list$version,
       n = 1,
-      name = export_name,
+      name = section,
       dir = outdir,
       edir = docdir,
       tdir = tmpdir,

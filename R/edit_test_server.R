@@ -1343,11 +1343,9 @@ edit_test_server <- function(
         shiny::req(base::length(languages)>0)
         shiny::req(base::length(input$slctlms)>0)
         
-        files <- test_parameters |>
-          dplyr::select(section, bloc) |>
-          base::unique()
+        sections <- base::unique(test_parameters$section)
         
-        pubnbr <- base::length(languages)*base::length(input$slctlms)*base::nrow(files)
+        pubnbr <- base::length(languages)*base::length(input$slctlms)*base::length(sections)
         pgr <- 0
         
         shinybusy::show_modal_progress_line(
@@ -1357,15 +1355,14 @@ edit_test_server <- function(
           test_parameters <- test_parameters |>
             dplyr::mutate(version = stringr::str_replace_all(version, "^..", l))
           for (lms in input$slctlms){
-            for (f in base::seq_len(base::nrow(files))){
+            for (sctn in sections){
               sub_test_parameters <- test_parameters |>
-                dplyr::filter(section == files$section[f], bloc == files$bloc[f])
+                dplyr::filter(section == sctn)
               
               shinybusy::update_modal_progress(
                 value = pgr,
                 text = base::paste0(
-                  "Generating section ", files$section[f],
-                  " bloc ", files$bloc[f],
+                  "Generating section ", sctn,
                   " in ", l,
                   " for ", lms,"..."
                 )
@@ -1378,8 +1375,7 @@ edit_test_server <- function(
                 modrval$test_folder,
                 lms,
                 l,
-                files$section[f],
-                files$bloc[f]
+                sctn
               )
             }
           }
