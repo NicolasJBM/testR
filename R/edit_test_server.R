@@ -451,17 +451,52 @@ edit_test_server <- function(
       
       
       
-      output$viewquestion <- shiny::renderUI({
+      
+      
+      
+      
+      
+      
+      
+      
+      shiny::observe({
         shiny::req(!base::is.null(questions()))
         shiny::req(question_to_display())
         shiny::req(question_to_display() %in% questions()$file)
+        
         to_view <- questions() |>
           dplyr::filter(file == question_to_display())
-        to_view$filepath <- base::paste0(
-          course_paths()$subfolders$original, "/", to_view$file
+        
+        
+        
+        previewdir <- course_paths()$subfolders$preview
+        shiny::req(base::dir.exists(previewdir))
+        prefix <- base::paste0(
+          "preview_",
+          session$token
         )
-        editR::display_question(to_view, course_paths)
+        shiny::addResourcePath(
+          prefix = prefix,
+          directoryPath = previewdir
+        )
+        output$viewquestion <- shiny::renderUI({
+          shiny::tags$iframe(
+            src = base::paste0(
+              prefix, "/",
+              stringr::str_replace(to_view$file, ".Rmd$",".html")
+            ),
+            width = "100%",
+            height = 600,
+            style = "border: none;"
+          )
+        })
       })
+      
+      
+      
+      
+      
+      
       
       
       

@@ -15,7 +15,7 @@
 #' @export
 
 
-set_question_parameters <- function(versionid, test_parameters = NA, docformat = "pandoc", record_solution = FALSE){
+set_question_parameters <- function(versionid, test_parameters = NA, docformat = "html", record_solution = FALSE){
   
   if (base::length(test_parameters) == 1){
     test_parameters <- tibble::tibble(
