@@ -58,14 +58,14 @@ create_essay <- function(propositions, codes, interrogation){
       letter = extendedleters[base::seq_len(base::nrow(exercise))],
       correct = value,
       interrogation = interrogation,
-      category = "",
+      category = "", weight = 0
     ) |>
     dplyr::select(
       number, letter, item,
       type, document, language, modifications,
       interrogation, proposition, value, scale,
-      explanation, keywords, correct,
-      weight, category
+      explanation, keywords, correct, category,
+      weight
     )
   
   return(exercise)

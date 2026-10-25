@@ -7,7 +7,7 @@
 set_question_parameters(
   versionid,
   test_parameters = NA,
-  docformat = "pandoc",
+  docformat = "html",
   record_solution = FALSE
 )
 }
