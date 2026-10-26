@@ -13,7 +13,6 @@ Encoding: UTF-8
 License: GPL-3 | file LICENSE
 Depends: R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports:
     dplyr,
     tibble,
@@ -32,8 +31,10 @@ Imports:
     tidyr,
     exams,
     knitr,
-    rmarkdown
+    rmarkdown,
+    fs
 Remotes:
     NicolasJBM/editR,
     NicolasJBM/classR,
     NicolasJBM/chartR
+Config/roxygen2/version: 8.1.0
