@@ -6,6 +6,7 @@ export(create_essay)
 export(create_problem)
 export(create_statements)
 export(create_two_statements)
+export(display_question)
 export(edit_test_server)
 export(edit_test_ui)
 export(export_test_to_files)
@@ -40,7 +41,6 @@ importFrom(dplyr,
   ungroup
 )
 importFrom(editR,
-  display_question,
   make_infobox,
   selection_server,
   selection_ui
@@ -61,7 +61,10 @@ importFrom(exams,
   exams2testvision
 )
 importFrom(fs,dir_copy)
-importFrom(knitr,knit)
+importFrom(knitr,
+  knit,
+  knit2html
+)
 importFrom(purrr,
   map,
   map2_chr,
@@ -85,11 +88,13 @@ importFrom(rhandsontable,
 )
 importFrom(rmarkdown,render)
 importFrom(shiny,
+  HTML,
   NS,
   actionButton,
   column,
   dateInput,
   fluidRow,
+  h2,
   h3,
   icon,
   isolate,
@@ -108,7 +113,8 @@ importFrom(shiny,
   tabPanel,
   tagList,
   uiOutput,
-  updateSelectInput
+  updateSelectInput,
+  withMathJax
 )
 importFrom(shinyAce,aceEditor)
 importFrom(shinyWidgets,

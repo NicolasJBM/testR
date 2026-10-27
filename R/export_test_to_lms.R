@@ -60,7 +60,6 @@ export_test_to_lms <- function(
   
   category_names <- stringr::str_remove_all(question_list$version, "-[0-9]+.Rmd")
   
-  
   base::print(base::paste0(
     "Generating section ", section,
     " in ", language,
@@ -68,6 +67,13 @@ export_test_to_lms <- function(
   ))
   
   if (lms == "Moodle"){
+    
+    knit_env <- base::new.env(parent = globalenv())
+    knit_env$test_parameters <- test_parameters
+    knit_env$propositions <- propositions
+    knit_env$translations <- translations
+    knit_env$record_solution <- record_solution
+    knit_env$docformat <- docformat
     
     exams::exams2moodle(
       file = question_list$version,
@@ -82,7 +88,7 @@ export_test_to_lms <- function(
       quiet = TRUE,
       verbose = FALSE,
       zip = FALSE,
-      envir = base::new.env()
+      envir = knit_env
     )
     
   } else if (lms == "Canvas"){

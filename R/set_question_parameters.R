@@ -17,7 +17,7 @@
 
 set_question_parameters <- function(versionid, test_parameters = NULL, docformat = "html", record_solution = FALSE){
   
-  if (!base::exists("test_parameters") | base::is.null(test_parameters) | base::is.na(test_parameters)){
+  if (!tibble::is_tibble(test_parameters) & !base::is.data.frame(test_parameters)){
     test_parameters <- tibble::tibble(
       test = "default",
       show_version = FALSE,
@@ -31,7 +31,6 @@ set_question_parameters <- function(versionid, test_parameters = NULL, docformat
   }
   
   version_parameters <- test_parameters |>
-    #dplyr::mutate(version = stringr::str_replace_all(version, "^..", substr(versionid, 1,2))) |>
     dplyr::filter(version == versionid)
   
   test <- test_parameters$test[1]

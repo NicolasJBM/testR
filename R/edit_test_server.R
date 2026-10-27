@@ -27,7 +27,6 @@
 #' @importFrom dplyr starts_with
 #' @importFrom dplyr summarise
 #' @importFrom dplyr ungroup
-#' @importFrom editR display_question
 #' @importFrom editR make_infobox
 #' @importFrom editR selection_server
 #' @importFrom purrr map
@@ -1096,7 +1095,7 @@ edit_test_server <- function(
             modrval$test_folder, "/1_questions/", question_to_edit()
           ))
         shiny::req(base::nrow(document_to_edit) > 0)
-        editR::display_question(document_to_edit, course_paths)
+        testR::display_question(document_to_edit, course_paths)
       })
       
       
@@ -1276,7 +1275,7 @@ edit_test_server <- function(
             version = stringr::str_replace_all(version, "^..", input$slctlanguage)
           )
         shiny::req(base::nrow(version_to_view) == 1)
-        editR::display_question(version_to_view, course_paths, new_test_parameters)
+        testR::display_question(version_to_view, course_paths, new_test_parameters)
       })
       
       
