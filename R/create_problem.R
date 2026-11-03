@@ -21,6 +21,16 @@ create_problem <- function(propositions, codes, interrogation){
   value <- NULL
   code <- NULL
   retire <- NULL
+  category <- NULL
+  correct <- NULL
+  document <- NULL
+  explanation <- NULL
+  item <- NULL
+  keywords <- NULL
+  letter <- NULL
+  modifications <- NULL
+  number <- NULL
+  weight <- NULL
   
   
   exercise <- propositions |>
@@ -30,22 +40,32 @@ create_problem <- function(propositions, codes, interrogation){
       retire == FALSE
     )
   
-  if (nrow(exercise) == 0){
+  if (base::nrow(exercise) == 0){
     exercise <- tibble::tibble(
       item = "", code = "", type = "", document = "",
       language = "", modifications = 0,
       proposition = "", value = 1, scale = "",
-      keywords = ""
+      explanation = "", keywords = "", category = ""
     )
   }
   
+  extendedleters <- c(letters, base::c(base::t(base::outer(letters, letters, paste, sep = ""))))
+  
   exercise <- exercise |>
-    dplyr::arrange(proposition) |>
+    dplyr::arrange(item) |>
     dplyr::mutate(
       number = base::seq_len(base::nrow(exercise)),
-      letter = base::letters[base::seq_len(base::nrow(exercise))],
+      letter = extendedleters[base::seq_len(base::nrow(exercise))],
       correct = value,
-      interrogation = interrogation
+      interrogation = interrogation,
+      category = "", weight = 0
+    ) |>
+    dplyr::select(
+      number, letter, item,
+      type, document, language, modifications,
+      interrogation, proposition, value, scale,
+      explanation, keywords, correct, category,
+      weight
     )
   
   return(exercise)

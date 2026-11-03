@@ -40,7 +40,7 @@ create_essay <- function(propositions, codes, interrogation){
       retire == FALSE
     )
   
-  if (nrow(exercise) == 0){
+  if (base::nrow(exercise) == 0){
     exercise <- tibble::tibble(
       item = "", code = "", type = "", document = "",
       language = "", modifications = 0,
